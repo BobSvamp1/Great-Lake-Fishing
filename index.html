@@ -1017,6 +1017,8 @@ const SLEDS=[
 const TRK=[0,.7,1,1.7,0],QUIET=[1,0,0,0,1],HOLDOK=i=>i===2||i===3;
 /* pulkan köps till på varvet: extra plats för fisk per skoter och nivå */
 const PULKA=[[0,12,22],[0,6],[0,8,14]],PULKA_P=[[500,1200],[700],[1400,3200]];
+function sledClamp(){if(S.sc)S.sc.forEach((c,i)=>{if(!c||!PULKA[i])return;const m=PULKA[i].length-1;if(c.up&&(c.up.pulka|0)>m)c.up.pulka=m;if(c.own&&(c.own.pulka|0)>m)c.own.pulka=m})}
+sledClamp();
 const pkCap=(i,lv)=>PULKA[i][Math.min(lv|0,PULKA[i].length-1)];
 function upsFor(k,i){if(k==='boat')return UPB.filter(u=>u.id!=='hold'||HOLDOK(i));return UPS.map(u=>u.id==='pulka'?Object.assign({},u,{max:PULKA[i].length-1}):u)}
 const PAINT=[{id:'orig',n:'Original'},{id:'falu',n:'Faluröd',c:'#b03a2a'},{id:'vit',n:'Vit',c:'#e6e4da'},{id:'marin',n:'Marinblå',c:'#24456e'},
@@ -1088,7 +1090,7 @@ function migrateV6(){
   while(S.boats.length<5)S.boats.push(0);
   S.boats[0]=1;S.boats[S.boat|0]=1;
   if(!Array.isArray(S.sleds)){S.sleds=[1,S.boat>=1?1:0,S.boat>=3?1:0];S.sled=S.boat>=3?2:S.boat>=1?1:0}
-  if(S.sc)S.sc.forEach((c,i)=>{if(!c||!PULKA[i])return;const m=PULKA[i].length-1;if(c.up&&(c.up.pulka|0)>m)c.up.pulka=m;if(c.own&&(c.own.pulka|0)>m)c.own.pulka=m});
+  try{sledClamp()}catch(e){}
   S.sleds[0]=1;if(S.sled==null||!S.sleds[S.sled])S.sled=0;
   if(S.inCave){S.winter=!!S.caveWin;S.inCave=0}
   S.comp=S.comp||{best:{},wins:0,hardWin:0};if(!S.comp.won){S.comp.won={};if(S.comp.wins)S.comp.won[0]=1;if(S.comp.hardWin){S.comp.won[0]=S.comp.won[1]=S.comp.won[2]=1}}
