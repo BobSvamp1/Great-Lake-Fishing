@@ -5795,7 +5795,7 @@ $('btnMenu').addEventListener('click',()=>{
   rows.appendChild(mus);rows.appendChild(sfx);
   if(COMP&&!COMP.ended)rows.appendChild(btn('Avbryt tävlingen','quiet',showCompQuit));
   if(CLOUD&&CLOUD.on)rows.appendChild(btn(CLOUD.user?'Konto · sparas i molnet':'Logga in och spara i molnet','quiet',showAcctSheet));
-  rows.appendChild(btn('Spara och flytta','quiet',showSaveSheet));
+  if(!(CLOUD&&CLOUD.on))rows.appendChild(btn('Spara och flytta','quiet',showSaveSheet));
   rows.appendChild(btn('Till startmenyn','quiet',()=>{closeSheet();showStartMenu()}));
   rows.appendChild(btn('Börja om','quiet',showResetSheet));
   n.appendChild(rows);openSheet(n);
