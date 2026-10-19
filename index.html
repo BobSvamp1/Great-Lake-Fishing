@@ -1038,7 +1038,7 @@ sledClamp();
 const pkCap=(i,lv)=>PULKA[i][Math.min(lv|0,PULKA[i].length-1)];
 function upsFor(k,i){if(k==='boat')return UPB.filter(u=>u.id!=='hold'||HOLDOK(i));return UPS.map(u=>u.id==='pulka'?Object.assign({},u,{max:PULKA[i].length-1}):u)}
 const PAINT=[{id:'orig',n:'Original'},{id:'falu',n:'Faluröd',c:'#b03a2a'},{id:'vit',n:'Vit',c:'#e6e4da'},{id:'marin',n:'Marinblå',c:'#24456e'},
- {id:'skog',n:'Skogsgrön',c:'#2f6b47'},{id:'senap',n:'Senapsgul',c:'#d4a02e'},{id:'himmel',n:'Himmelsblå',c:'#5aa6cf'},{id:'turkos',n:'Turkos',c:'#2a9690'},
+ {id:'skog',n:'Skogsgrön',c:'#2f6b47'},{id:'senap',n:'Senapsgul',c:'#d4a02e',gone:1},{id:'himmel',n:'Himmelsblå',c:'#5aa6cf'},{id:'turkos',n:'Turkos',c:'#2a9690'},
  {id:'orange',n:'Orange',c:'#e2702a'},{id:'rosa',n:'Rosa',c:'#d8708c'},{id:'lila',n:'Lila',c:'#6a4a9a'},{id:'svart',n:'Svart',c:'#2a2d33'},{id:'guld',n:'Linas guld',c:'#d4a83a',secret:1}];
 const STRIPES=[{id:'orig',n:'Original'},{id:'none',n:'Ingen'},{id:'rod',n:'Röd',c:'#cf432f'},{id:'vit',n:'Vit',c:'#f2f0e6'},{id:'guld',n:'Guld',c:'#e8b84a'},
  {id:'bla',n:'Blå',c:'#3a78c8'},{id:'gron',n:'Grön',c:'#4caa5a'},{id:'svart',n:'Svart',c:'#1e2226'}];
@@ -5195,7 +5195,7 @@ function yRender(){
   const cat=YD.cat;
   if(cat==='paint'||cat==='stripe'||cat==='flag'){
     const L=cat==='paint'?PAINT:cat==='stripe'?STRIPES:FLAGS,ownS=cat==='paint'?c.paints:cat==='stripe'?c.stripes:c.flags,price=COS_P[cat];
-    L.forEach(o=>{if(o.secret&&!(S.unl&&S.unl[o.id]))return;if(o.secret)ownS[o.id]=1;const has=!!ownS[o.id],isOn=c[cat]===o.id,b=row((o.c?'<i class="yv-sw" style="background:'+o.c+'"></i>':'')+o.n,isOn?'✓':has?'':kr(price),YD.opt===o.id||(YD.opt==null&&isOn),()=>{YD.opt=o.id;yRender()})});
+    L.forEach(o=>{if(o.secret&&!(S.unl&&S.unl[o.id]))return;if(o.gone&&!ownS[o.id])return;if(o.secret)ownS[o.id]=1;const has=!!ownS[o.id],isOn=c[cat]===o.id,b=row((o.c?'<i class="yv-sw" style="background:'+o.c+'"></i>':'')+o.n,isOn?'✓':has?'':kr(price),YD.opt===o.id||(YD.opt==null&&isOn),()=>{YD.opt=o.id;yRender()})});
     const o=YD.opt;
     if(o==null||o===c[cat])actBtn('Välj ett alternativ','quiet',()=>{},true);
     else if(ownS[o])actBtn('Använd','main',()=>{c[cat]=o;YD.opt=null;save();yRender()});
