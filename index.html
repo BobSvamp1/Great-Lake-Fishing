@@ -748,7 +748,8 @@ const HULL=[
  {h0:'#3f8c6c',h1:'#1d4a39',rim:'#f2f0e6',motor:1},
  {h0:'#3f78b6',h1:'#1b3f6c',rim:'#f2f0e6',motor:1,cabin:1},
  {h0:'#304257',h1:'#121c29',rim:'#ece8dc',motor:1,cabin:2,stripe:'#cf432f'},
- {h0:'#2f7a4a',h1:'#18452a',rim:'#d9ac72',canoe:1}
+ {h0:'#2f7a4a',h1:'#18452a',rim:'#d9ac72',canoe:1},
+ {h0:'#c8302a',h1:'#5e120d',rim:'#f2f0e6',motor:1,cabin:2,stripe:'#f2f0e6',trawler:1}
 ];
 const JACKET='#3a6ea5';
 /* Fiskaren i profil: keps, kort vitt skägg. Returnerar handens läge (lokalt). */
@@ -833,6 +834,9 @@ function drawBoatSide(g,x,y,lvl,sc,t,cu){
       g.strokeStyle='#8f9aa3';g.lineWidth=.35;for(let i=0;i<2;i++){g.beginPath();g.moveTo(-9.5+i*2,-4.6);g.lineTo(-13.5+i*2,-15);g.stroke()}}
   }
   drawFlag(g,-11.2,-4.4,10,B.flag,t||0,-1);
+  if(B.trawler){g.strokeStyle='#e8b84a';g.lineWidth=.8;g.lineCap='round';g.beginPath();g.moveTo(-11.6,-4.4);g.lineTo(-14.4,-17);g.lineTo(-10.6,-17.4);g.lineTo(-9.8,-4.6);g.stroke();
+    g.fillStyle='#2b3440';g.fillRect(-13.4,-18.2,2.4,1.6);g.strokeStyle='rgba(40,46,50,.8)';g.lineWidth=.35;g.beginPath();g.moveTo(-12.6,-16.8);g.lineTo(-16.5,1);g.stroke();
+    g.strokeStyle='#e6e8e4';g.lineWidth=.45;g.beginPath();g.moveTo(5,-13.4);g.lineTo(5,-22);g.moveTo(3,-20);g.lineTo(7,-20);g.stroke()}
   const hand=drawFisherSide(g,B.cabin?-6:-2.5,-4.2,t);
   if(B.canoe){g.beginPath();g.moveTo(-15,-6.2);g.quadraticCurveTo(-13,1.8,-6,2);g.lineTo(7,2);g.quadraticCurveTo(14,1.8,15.5,-6.6);g.quadraticCurveTo(0,-3.4,-15,-6.2);g.closePath();
     const cg=g.createLinearGradient(0,-6,0,2);cg.addColorStop(0,B.h0);cg.addColorStop(1,B.h1);g.fillStyle=cg;g.fill();
@@ -883,7 +887,7 @@ function mapHead(g,fx,hy,u,ang,kind,r){
   }
 }
 function drawBoatMap(g,x,y,s,ang,lvl,sq,t,cu){
-  const B=hullOf(lvl,cu),k=B.canoe?1:lvl>=2?1.15:1;HP=B.canoe?CANOEPTS:null;const ca=Math.cos(ang),sa=Math.sin(ang);
+  const B=hullOf(lvl,cu),k=B.canoe?1:B.trawler?1.65:lvl>=2?1.15:1;HP=B.canoe?CANOEPTS:null;const ca=Math.cos(ang),sa=Math.sin(ang);
   const L2=(px,py)=>[x+(px*ca-py*sa)*s,y+(px*sa+py*ca)*s*sq];
   g.fillStyle='rgba(4,24,36,.3)';boatPoly(g,x+s*1.2,y+s*2.4,s,ang,sq,k*1.05);g.fill();
   const fb=s*(SHOWROOM?3.4:2.6),steps=SHOWROOM?16:4;
@@ -910,6 +914,16 @@ function drawBoatMap(g,x,y,s,ang,lvl,sq,t,cu){
      face(cx+cl*.7,cw+.02,cx-cl*.5,cw+.02,0,1,'#4f8fae');
      face(cx-cl*.5,-cw-.02,cx+cl*.7,-cw-.02,0,-1,'#4f8fae');
      face(bx,cw*.6,bx,-cw*.6,-1,0,'#3f7a96');}
+  }
+  if(B.trawler){
+    /* trålgalge i aktern, trålvinsch och mast med radar */
+    const ln=(a,ha,b,hb,col,w)=>{g.strokeStyle=col;g.lineWidth=Math.max(.4,s*w);g.lineCap='round';g.beginPath();g.moveTo(a[0],a[1]-ha);g.lineTo(b[0],b[1]-hb);g.stroke()};
+    const pa=L2(-10.4*k,-3.4),pb=L2(-10.4*k,3.4),ht=fb+s*8.5;
+    const dr=L2(-7.4*k,0);g.fillStyle='#2b3440';g.beginPath();g.ellipse(dr[0],dr[1]-fb-s*1.2,s*2.2,s*1.3,0,0,7);g.fill();g.fillStyle='#4a7a3a';g.beginPath();g.ellipse(dr[0],dr[1]-fb-s*1.5,s*1.8,s*.9,0,0,7);g.fill();
+    ln(pa,fb,pa,ht,'#e8b84a',.55);ln(pb,fb,pb,ht,'#e8b84a',.55);ln(pa,ht,pb,ht,'#e8b84a',.6);
+    const top=L2(-10.4*k,0),blk=[top[0],top[1]-ht];g.fillStyle='#2b3440';g.fillRect(blk[0]-s*.6,blk[1],s*1.2,s*1.2);
+    const ms=L2(2.4*k,0),mh=fb+s*4.2+s*7.5;ln(ms,fb+s*4.4,ms,mh,'#e6e8e4',.4);const ya=L2(2.4*k,-2.2),yb=L2(2.4*k,2.2);ln(ya,mh-s*2,yb,mh-s*2,'#e6e8e4',.35);
+    const ra=(t||0)*3;g.fillStyle='#f2f0e6';g.fillRect(ms[0]-Math.abs(Math.cos(ra))*s*1.6,ms[1]-mh-s*.4,Math.max(.6,Math.abs(Math.cos(ra))*s*3.2),s*.6);
   }
   if(B.flag&&B.flag!=='none'){const fl=L2(-10.2*k,0);drawFlag(g,fl[0],fl[1]-fb,s*7,B.flag,t||0,ca>0?-1:1)}
   if(B.lamp){
@@ -944,7 +958,8 @@ const GEAR={
   {n:'Båt med motor',p:1400,spd:48,cap:16,d:'Snabbare och kan trolla, men motorn skrämmer en del fisk. Lastrum 16.'},
   {n:'Fiskebåt',p:4500,spd:58,cap:36,d:'Arbetsbåten. Störst lastrum av alla, bra för långa dagar på sjön. Lastrum 36.'},
   {n:'Trollingbåt',p:10000,spd:74,cap:24,d:'Snabbast och byggd för trolling: det hugger mycket oftare när du släpar betet. Lastrum 24.'},
-  {n:'Älvkanot',p:3200,spd:44,cap:12,d:'Tyst och smidig. Den enda båten som klarar strömmen i Indalsälven. Kan inte trolla. Lastrum 12.'}]},
+  {n:'Älvkanot',p:3200,spd:44,cap:12,d:'Tyst och smidig. Den enda båten som klarar strömmen i Indalsälven. Kan inte trolla. Lastrum 12.'},
+  {n:'Trålaren',p:2500000,spd:128,cap:200,d:'Ett riktigt havsfartyg på insjön. Släpar en trål som fångar fisk av sig själv medan du kör ute på öppet vatten, trollar med fyra linor, lockar fisk från hela sjön och drar oftare upp riktiga bjässar. Lastrum 200.'}]},
  sonar:{label:'Ekolod',items:[
   {n:'Inget ekolod',p:0,d:'Du ser inget under ytan'},
   {n:'Enkelt ekolod',p:350,d:'Visar fiskarna under båten som skuggor och hur djupt det är.'},
@@ -1014,7 +1029,8 @@ const SLEDS=[
  {n:'Sportskoter',p:3800,spd:84,cap:4,d:'Snabbast på isen, men orkar bara dra en liten pulka. Rymmer 4 fiskar utan pulka.'},
  {n:'Fjällskoter',p:9500,spd:60,cap:10,d:'Den enda som klarar fjälleden upp till Fjällsjön. Rymmer 10 fiskar utan pulka.'}];
 /* vad varje båt är bra på: trolling (0 = kan inte) och om den är tyst */
-const TRK=[0,.7,1,1.7,0],QUIET=[1,0,0,0,1],HOLDOK=i=>i===2||i===3;
+const TRK=[0,.7,1,1.7,0,4],QUIET=[1,0,0,0,1,1],HOLDOK=i=>i===2||i===3||i===5;
+const TRAWL_EARN=10000000,tralOpen=()=>!!(S.boats&&S.boats[5])||((S.stats&&S.stats.earned)||0)>=TRAWL_EARN;
 /* pulkan köps till på varvet: extra plats för fisk per skoter och nivå */
 const PULKA=[[0,12,22],[0,6],[0,8,14]],PULKA_P=[[500,1200],[700],[1400,3200]];
 function sledClamp(){if(S.sc)S.sc.forEach((c,i)=>{if(!c||!PULKA[i])return;const m=PULKA[i].length-1;if(c.up&&(c.up.pulka|0)>m)c.up.pulka=m;if(c.own&&(c.own.pulka|0)>m)c.own.pulka=m})}
@@ -1036,7 +1052,7 @@ function hxMix(a,b,k){const A=parseInt(a.slice(1),16),Bn=parseInt(b.slice(1),16)
 function upName(kind,idx,u){return kind==='boat'&&idx===0&&u.id==='motor'?'Lättare åror':kind==='boat'&&idx===4&&u.id==='motor'?'Lättare paddel':u.n}
 function upPrice(kind,idx,id,lv){
   if(id==='pulka')return PULKA_P[idx][lv];
-  const base=Math.max(kind==='boat'?GEAR.boat.items[idx].p:SLEDS[idx].p,1600);
+  const base=Math.min(30000,Math.max(kind==='boat'?GEAR.boat.items[idx].p:SLEDS[idx].p,1600));
   if(id==='motor')return Math.round(base*(lv===0?.22:.45)/50)*50;
   if(id==='cool')return Math.round(base*(lv===0?.18:.36)/50)*50;
   return id==='hold'?1500:600;
@@ -1087,7 +1103,7 @@ function drawFlag(g,x,y,h,id,t,dir){
 }
 function migrateV6(){
   if(!Array.isArray(S.boats))S.boats=[0,1,2,3].map(i=>i<=(S.boat|0)?1:0);
-  while(S.boats.length<5)S.boats.push(0);
+  while(S.boats.length<6)S.boats.push(0);
   S.boats[0]=1;S.boats[S.boat|0]=1;
   if(!Array.isArray(S.sleds)){S.sleds=[1,S.boat>=1?1:0,S.boat>=3?1:0];S.sled=S.boat>=3?2:S.boat>=1?1:0}
   try{sledClamp()}catch(e){}
@@ -1891,7 +1907,7 @@ function pickFish(spot,u){
   let kg=f.kg[0]+(f.kg[1]-f.kg[0])*frac;
   /* Riktiga bjässar: väldigt ovanliga, lite vanligare med bra spö och på storfiskplatser */
   let giant=false;
-  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8)}
+  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8)}
   kg=f.beast?Math.round(kg):(kg>=1?Math.round(kg*10)/10:Math.round(kg*100)/100);
   kg=Math.max(kg,f.kg[0]);
   /* Gyllene fiskar: ungefär 1 på 250, värda fem gånger mer */
@@ -2025,16 +2041,40 @@ function trollUpdate(dt,moved){
   const p=.05*(.5+act)*(.6+spot.dz)*(spot.hot?2.5:1)*TRK[S.boat]*(holdOn()?1.35:1);
   if(Math.random()<p){TRL.bite={t:3.2,spot:spot,pick:trollPick(spot)};SND.bite();vib([60,40,60]);toast('Det hugger på trollingspöt!');updateAction()}
 }
+/* Trålaren: trålen fångar fisk av sig själv när man kör på öppet vatten */
+const TRW={t:0};
+function trawlUpdate(dt,moved){
+  if(S.winter||S.boat!==5||!moved||COMP||mode!=='sail')return;
+  if(ZN.sd<12||S.hold.length>=cap())return;
+  const z=ZN.cur;if(!z||spotLocked(z))return;
+  TRW.t+=dt;if(TRW.t<6)return;TRW.t=0;
+  if(Math.random()>.55)return;
+  const spot=fishSpotAt(B.x,B.y);let c=null;
+  for(let i=0;i<6&&!c;i++){const p=pickFish(spot,dayU(tt));if(!p.f.beast&&!p.f.legend)c=p}
+  if(!c)return;
+  record(c);S.hold.push({id:c.f.id,kg:c.kg,price:c.price,spot:c.spot,gold:!!c.gold});save();updateHUD();
+  toast('Trålen: '+(c.gold?'gyllene ':'')+c.f.name.toLowerCase()+' '+kgTxt(c.kg)+(S.hold.length>=cap()?' · lastrummet är fullt':''));
+}
 function trollStrike(){
   const b=TRL.bite;if(!b)return;TRL.bite=null;
   S.rodSel='troll';enterFish(b.spot);F.school=[];F.pick=b.pick;F.dy=clamp(130+((HABIT[b.pick.f.id]||{d:.6}).d)*155,128,290);
   startReel();F.reel.grace=1.6;toast('Håll fingret på skärmen och dra in!');
 }
 /* linorna efter båten på kartan */
+function trawlDraw(g,t,sq){
+  if(S.winter||S.boat!==5||mode!=='sail'||ZN.sd<12)return;
+  const ca=Math.cos(B.ang),sa=Math.sin(B.ang),mv=TRL.moving,len=mv?58:30;
+  const nx=B.x-ca*(18+len),ny=B.y-sa*(18+len),pn=proj(nx,ny);if(!pn)return;
+  [-1,1].forEach(side=>{const sx=B.x-ca*16+(-sa)*side*5,sy=B.y-sa*16+ca*side*5,p0=proj(sx,sy),p1=proj(nx+(-sa)*side*6,ny+ca*side*6);if(!p0||!p1)return;
+    g.strokeStyle='rgba(30,36,40,.55)';g.lineWidth=Math.max(.3,.35*p0.s);g.beginPath();g.moveTo(p0.x,p0.y-6*p0.s);g.quadraticCurveTo((p0.x+p1.x)/2,(p0.y+p1.y)/2,p1.x,p1.y);g.stroke()});
+  for(let i=-2;i<=2;i++){const fx=nx+(-sa)*i*3,fy=ny+ca*i*3,pf=proj(fx,fy);if(!pf)continue;g.fillStyle=i%2?'#e8b84a':'#e2702a';g.beginPath();g.arc(pf.x,pf.y+Math.sin(t*3+i)*.4*pf.s,.9*pf.s,0,7);g.fill()}
+  if(mv){g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=Math.max(.3,.25*pn.s);g.beginPath();g.ellipse(pn.x,pn.y,9*pn.s,9*pn.s*sq(pn),0,0,7);g.stroke()}
+}
 function trollDraw(g,t,sq){
+  trawlDraw(g,t,sq);
   if(!trollOn())return;
   const ca=Math.cos(B.ang),sa=Math.sin(B.ang);
-  (holdOn()?[-1,1,0]:[-1,1]).forEach((side,i)=>{
+  (S.boat===5?[-1.6,1.6,-.6,.6]:holdOn()?[-1,1,0]:[-1,1]).forEach((side,i)=>{
     const sx=B.x-ca*8+(-sa)*side*3,sy=B.y-sa*8+ca*side*3,len=TRL.moving?34:18,spread=TRL.moving?7:4;
     const ex=sx-ca*len+(-sa)*side*spread+Math.sin(t*2+i)*1.2,ey=sy-sa*len+ca*side*spread+Math.cos(t*2.3+i)*1.2;
     const p0=proj(sx,sy),p1=proj(ex,ey);if(!p0||!p1)return;
@@ -2091,7 +2131,7 @@ function sailUpdate(dt,t){
   if(moved&&(S.boat===0||S.boat===4)&&!S.winter){rowT-=dt;if(rowT<=0){rowT=0.9;SND.row()}}
   for(let i=B.wake.length-1;i>=0;i--){const w=B.wake[i];w.l-=dt*(w.trk?.12:.9);w.x+=w.vx*dt;w.y+=w.vy*dt;if(w.l<=0)B.wake.splice(i,1)}
   if(!inCaveMap()){treasureUpdate(dt,t);zooUpdate(dt,t)}
-  zoneTick(dt);if(!inCaveMap())hotUpdate(dt);trollUpdate(dt,moved);
+  zoneTick(dt);if(!inCaveMap())hotUpdate(dt);trollUpdate(dt,moved);trawlUpdate(dt,moved);
   if(M.def.river&&!moved){const ny2=B.y-6*dt,cx=(alvCx(B.y/T)*MS*T),nx2=B.x+(cx-B.x)*.25*dt;if(M.free(nx2,ny2)&&Math.hypot(M.dock.x-B.x,M.dock.y-B.y)>36){B.x=nx2;B.y=ny2}}
   const nd=Math.hypot(M.dock.x-B.x,M.dock.y-B.y)<28;
   const nr=!!M.ramp&&Math.hypot(M.ramp.x-B.x,M.ramp.y-B.y)<28;
@@ -2728,7 +2768,7 @@ function spawnFish(initial){
 function updateSchool(dt){
   F.sp-=dt;
   const nb=newbie();
-  if(F.sp<=0&&F.school.length<(nb>.5?5:4)){spawnFish(false);F.sp=(6.5+(1-activity(F.spot,clock))*11)*rnd(0.7,1.3)*(1-.6*nb)*(!S.winter&&QUIET[S.boat]?.8:!S.winter&&S.boat===1?1.1:1)}
+  if(F.sp<=0&&F.school.length<(nb>.5?5:4)){spawnFish(false);F.sp=(6.5+(1-activity(F.spot,clock))*11)*rnd(0.7,1.3)*(1-.6*nb)*(!S.winter&&S.boat===5?.5:!S.winter&&QUIET[S.boat]?.8:!S.winter&&S.boat===1?1.1:1)}
   const hunting=F.state==='waiting',bait=BAITBY[S.baitSel];
   let biter=null;
   for(const s of F.school){
@@ -5105,7 +5145,13 @@ function yLoop(){
   const ang=t*.5;SHOWROOM=true;PREVC={kind:YD.kind,idx:YD.idx,cu:yPreview()};
   const own=yOwned(YD.kind,YD.idx);
   if(!own)g.globalAlpha=.9;
-  if(YD.kind==='boat'){const sc=YD.idx>=2?5:5.6;drawBoatMap(g,cx,cy+4,sc,ang,YD.idx,.28,t)}
+  if(YD.kind==='boat'&&YD.idx===5&&!tralOpen()){
+    const oc=YD.sil||(YD.sil=document.createElement('canvas'));oc.width=w;oc.height=h;const og=oc.getContext('2d');og.clearRect(0,0,w,h);
+    drawBoatMap(og,cx,cy+4,3.5,ang,5,.28,t);og.globalCompositeOperation='source-atop';og.fillStyle='#07090b';og.fillRect(0,0,w,h);og.globalCompositeOperation='source-over';
+    g.globalAlpha=1;g.drawImage(oc,0,0);
+    g.fillStyle='rgba(255,235,190,.7)';g.font='700 22px Fredoka, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('?',cx,cy-34+Math.sin(t*2)*2);
+  }
+  else if(YD.kind==='boat'){const sc=YD.idx===5?3.5:YD.idx>=2?5:5.6;drawBoatMap(g,cx,cy+4,sc,ang,YD.idx,.28,t)}
   else drawSledMap(g,cx+10,cy+3,YD.idx===2?3.9:4.3,ang,.3,t,YD.idx);
   g.globalAlpha=1;SHOWROOM=false;PREVC=null;
   YD.raf=requestAnimationFrame(yLoop);
@@ -5119,10 +5165,12 @@ function yRender(){
   const k=YD.kind,i=YD.idx,items=yItems(k),it=items[i],own=yOwned(k,i),sel=ySel(k)===i,c=vcust(k,i);
   r.querySelector('.yv-money').textContent=kr(S.money);
   r.querySelectorAll('.yv-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
-  r.querySelector('.yv-name').innerHTML='<b>'+it.n+'</b><span>'+(sel?'Används nu':own?'Din':kr(it.p))+'</span>';
+  const locked=k==='boat'&&i===5&&!tralOpen();
+  r.querySelector('.yv-name').innerHTML=locked?'<b>???</b><span>Låst</span>':'<b>'+it.n+'</b><span>'+(sel?'Används nu':own?'Din':kr(it.p))+'</span>';
   r.querySelector('.yv-plate').textContent=own&&c.name?c.name:'';r.querySelector('.yv-plate').hidden=!(own&&c.name);
   /* statistik med förhandsvisning av uppgraderingen */
   const cur=yStats(k,i),pv=yStats(k,i,yPreview().up);
+  if(locked){r.querySelector('.yv-stats').innerHTML='';const l0=r.querySelector('.yv-list');l0.innerHTML='';r.querySelector('.yv-desc').textContent='';const a0=r.querySelector('.yv-act');a0.innerHTML='';const lb=btn('Låst','quiet');lb.disabled=true;a0.appendChild(lb);return}
   r.querySelector('.yv-stats').innerHTML=cur.map((s0,j)=>{const a=Math.min(1,s0[1]),b=Math.min(1,pv[j][1]),segs=10;let h='';
     for(let q=0;q<segs;q++){const f=(q+.5)/segs;h+='<i class="'+(f<=a?'f':f<=b?'p':'')+'"></i>'}
     return '<div class="yv-stat"><span>'+s0[0]+'</span><div class="yv-bar">'+h+'</div></div>'}).join('');
@@ -5201,7 +5249,8 @@ function qNear(){
   if(caveOpen()&&d('cave')<32)return 'cave';
   return null;
 }
-function qTick(){const n=mode==='sail'?qNear():null;if(n!==nearQ){nearQ=n;updateAction();setWhere()}}
+function qTick(){if(!(S.unl&&S.unl.tral)&&tralOpen()){S.unl=S.unl||{};S.unl.tral=1;save();toast('Något stort har lagt till vid Varvet...')}
+  const n=mode==='sail'?qNear():null;if(n!==nearQ){nearQ=n;updateAction();setWhere()}}
 /* figurerna på kartan */
 function qDyn(dyn,g,t,sq,WIN){
   const qp=qPos();if(!qp)return;const st=QS().st,na=nightAmt(dayU(t));
@@ -5864,8 +5913,9 @@ function showModMenu(){
   const rows=el('div','actions');
   const add=(label,fn,cls)=>rows.appendChild(btn(label,cls||'quiet',()=>{fn();save();updateHUD();updateAction();showModMenu()}));
   add('+10 000 kr',()=>{S.money+=10000},'gold');
+  add('Tjäna 10 miljoner (trålaren)',()=>{S.stats.earned=(S.stats.earned||0)+10000000;S.money+=3000000},'gold');
   add('+100 000 kr',()=>{S.money+=100000},'gold');
-  add('Lås upp all utrustning',()=>{S.rod=GEAR.rod.items.length-1;S.boat=GEAR.boat.items.length-1;S.boats=[1,1,1,1,1];S.sleds=[1,1,1];S.sonar=GEAR.sonar.items.length-1;
+  add('Lås upp all utrustning',()=>{S.rod=GEAR.rod.items.length-1;S.boat=GEAR.boat.items.length-1;S.boats=[1,1,1,1,1,1];S.sleds=[1,1,1];S.sonar=GEAR.sonar.items.length-1;
     RODS.forEach(r=>S.rods[r.id]=1);BAITS.forEach(b=>S.baits[b.id]=1);S.nakten=1;toast('All utrustning upplåst')});
   add(S.cabin?'Ta bort stugan':'Ge mig stugan',()=>{S.cabin=S.cabin?0:1});
   add('Lås upp Olof',()=>{S.comp=S.comp||{best:{}};S.comp.hardWin=Math.max(1,S.comp.hardWin||0)});
