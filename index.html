@@ -2438,6 +2438,8 @@ function sailDraw(t){
   const dyn=[];
   dyn.push({y:B.y,fn:()=>{const p=proj(B.x,B.y+Math.sin(t*2.4)*.3);if(p){if(WIN)drawSledMap(g,p.x,p.y,p.s,B.ang,sq(p),t);else drawBoatMap(g,p.x,p.y,p.s,B.ang,S.boat,sq(p),t)}}});
   if(M.comp)compDyn(dyn,g,t,WIN,sq);
+  if(M.id==='stor'&&!M.brClr){M.brClr=1;const fb0=footBridge(),clr=(x0,x1,y0,y1)=>{if(M.rows)M.rows.forEach((r,i)=>{if(r)M.rows[i]=r.filter(o=>!(o.x>x0&&o.x<x1&&o.y>y0&&o.y<y1))})};
+    clr(BRIDGE.x0-14,BRIDGE.x1+14,BRIDGE.y-3,BRIDGE.y+BRIDGE.w+18);clr(fb0.x0-12,fb0.x1+12,fb0.y-3,fb0.y+fb0.w+18)}
   if(M.id==='stor'){dyn.push({y:BRIDGE.y+BRIDGE.w+14,fn:()=>drawBridge(g,t,WIN,na)});const fb=footBridge();dyn.push({y:fb.y+fb.w+14,fn:()=>drawFootBridge(g,t,WIN,na)})}
   if(M.cabin&&S.cabin)cabinSmoke(dyn,g,t);
   if(TR.obj){const o=TR.obj;dyn.push({y:o.y,fn:()=>{const p=proj(o.x,o.y);if(p&&p.x>-20&&p.x<W+20&&p.y<H+20)drawTreasure(g,p.x,p.y,p.s,o,t,WIN)}})}
