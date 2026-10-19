@@ -5854,7 +5854,7 @@ window.addEventListener('keyup',e=>{if(e.code==='Space'&&mode==='fish')fishRelea
   let taps=[];
   $('moneyChip').addEventListener('click',()=>{
     const n=Date.now();taps=taps.filter(x=>n-x<4000);taps.push(n);
-    if(taps.length>=7){taps=[];showModMenu()}
+    if(taps.length>=7){taps=[];if(!/(^|\.)github\.io$/.test(location.hostname))showModMenu()}
   });
 })();
 function showModMenu(){
