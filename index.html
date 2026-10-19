@@ -329,6 +329,10 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .m-acct{display:block;width:100%;margin-top:10px;background:none;border:0;padding:6px;color:inherit;font:600 14px/1.3 "Atkinson Hyperlegible",system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;opacity:.85;cursor:pointer}
 .m-acct[hidden]{display:none}
 .acc-in{display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:12px 14px;border-radius:10px;border:2px solid rgba(0,0,0,.18);background:#fffaf0;color:#2a1a0e;font:16px "Atkinson Hyperlegible",system-ui,sans-serif}
+.lb-tabs{display:flex;gap:6px;margin:4px 0 10px}.lb-tabs .btn{flex:1;min-height:44px;padding:6px 4px;font-size:14px}
+.lb-list{list-style:none;margin:0;padding:0}.lb-list li{display:flex;align-items:center;gap:8px;padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.12);font-size:15px}
+.lb-list li.me{background:rgba(232,184,74,.22);border-radius:8px}.lb-list .lb-r{flex:0 0 30px;text-align:center;font-weight:700}.lb-list .lb-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb-list .lb-v{font-weight:700;white-space:nowrap}
+.lb-list li.lb-wait{justify-content:center;opacity:.8;border:0}.lb-me{margin-top:10px;font-size:14px;opacity:.9}
 .acc-link{background:none;border:0;padding:8px 0;color:inherit;font:600 14px "Atkinson Hyperlegible",system-ui,sans-serif;text-decoration:underline;cursor:pointer;opacity:.85}
 .fc-row .btn{flex:1}
 .fc-row .fc-ic{flex:0 0 52px;width:52px;height:52px;min-height:52px;border-radius:50%;padding:0;display:grid;place-items:center}
@@ -2435,7 +2439,7 @@ function sailDraw(t){
   if(M.id==='stor'){dyn.push({y:BRIDGE.y+BRIDGE.w+14,fn:()=>drawBridge(g,t,WIN,na)});const fb=footBridge();dyn.push({y:fb.y+fb.w+14,fn:()=>drawFootBridge(g,t,WIN,na)})}
   if(M.cabin&&S.cabin)cabinSmoke(dyn,g,t);
   if(TR.obj){const o=TR.obj;dyn.push({y:o.y,fn:()=>{const p=proj(o.x,o.y);if(p&&p.x>-20&&p.x<W+20&&p.y<H+20)drawTreasure(g,p.x,p.y,p.s,o,t,WIN)}})}
-  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);
+  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);boardDyn(dyn,g,t,WIN);
   if(M.chest)dyn.push({y:M.chest.ly,fn:()=>{const p=proj(M.chest.lx,M.chest.ly);if(p)drawChestMap(g,p.x,p.y,p.s,t,QS().st>=4)}});
   dyn.sort((a,b)=>a.y-b.y);let di=0;
   const r0=Math.max(0,Math.floor((V.camY-DBILL*(V.D||D0)/D0+PAD)/2)),r1=Math.floor((V.camY-6+PAD)/2);
@@ -4208,6 +4212,7 @@ function setWhere(){
   else if(nearYard&&M.yard)p=M.yard.name;
   else if(nearPortal)p=nearPortal.name;
   else if(nearQ&&nearQ.indexOf('npc:')===0)p=LOOK[nearQ.slice(4)].name;
+  else if(nearQ==='board')p='Topplistan';
   else if(nearQ)p=nearQ==='nils'?'Gamle Nils':nearQ==='stone'?'Runstenen':nearQ==='chest'?'Gädd-Gurras kista':'Gädd-Gurras grotta';
   else if(ZN.cur)p=ZN.cur.name;
   if(mode==='cabin')p='Stugan';
@@ -4220,6 +4225,7 @@ function updateAction(){
   if(mode==='cabin'){b.textContent='Gå ut';b.disabled=false;return}
   if(mode==='cave'){b.textContent='Ro ut ur grottan';b.disabled=false;return}
   if(TRL.bite){b.textContent='Dra in!';b.disabled=false;return}
+  if(nearQ==='board'){b.textContent='Se topplistan';b.disabled=false;return}
   if(nearQ&&nearQ.indexOf('npc:')===0){b.textContent='Prata med '+LOOK[nearQ.slice(4)].name.split(' ')[0];b.disabled=false;return}
   if(nearQ){b.textContent=nearQ==='nils'?'Prata med Nils':nearQ==='stone'?'Undersök stenen':nearQ==='chest'?'Öppna kistan':'Ro in i grottan';b.disabled=false;return}
   if(nearSpot){
@@ -5182,6 +5188,7 @@ function qPos(){
 const caveOpen=()=>QS().st>=2&&nightAmt(dayU(tt))>.45;
 function qNear(){
   {const np=npcNear();if(np)return 'npc:'+np}
+  if(boardNear())return 'board';
   if(M.id==='grotta'){if(!M.chest||B.tx!=null||QS().st>=4)return null;return Math.hypot(M.chest.x-B.x,M.chest.y-B.y)<30?'chest':null}
   const qp=qPos();if(!qp||B.tx!=null)return null;const st=QS().st;
   const d=k=>Math.hypot(qp[k].x-B.x,qp[k].y-B.y);
@@ -5295,6 +5302,7 @@ function qInteract(){
     return;
   }
   if(nearQ&&nearQ.indexOf('npc:')===0){npcTalk(nearQ.slice(4));return}
+  if(nearQ==='board'){showBoard();return}
   if(nearQ==='cave')enterCaveMap();
   if(nearQ==='chest')openChest();
 }
@@ -5639,7 +5647,7 @@ function cloudPush(now){
   if(!now){CLOUD.t=setTimeout(()=>cloudPush(true),15000);return}
   CLOUD.pending=false;const u=CLOUD.user;
   cloudDoc().set({data:JSON.stringify(S),savedAt:S.savedAt||Date.now(),money:S.money|0,catches:S.catches|0,name:(u.displayName||u.email||'').slice(0,60)})
-    .then(()=>{CLOUD.last=Date.now();CLOUD.err='';acctUI()})
+    .then(()=>{CLOUD.last=Date.now();CLOUD.err='';acctUI();boardPush()})
     .catch(()=>{CLOUD.err='Kunde inte spara i molnet just nu. Det sparas på enheten och försöker igen.';CLOUD.pending=true;acctUI()});
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&CLOUD.pending)cloudPush(true)});
@@ -5689,6 +5697,84 @@ function showAcctSheet(){
   n.appendChild(fg);
   openSheet(n);
 }
+/* ---------- Topplistan på ön i Storsjön ---------- */
+function boardPos(){
+  if(M.id!=='stor')return null;if(M.bp)return M.bp;
+  const cx=313;let y=142;while(y<M.WH-10&&M.isLand(cx,y))y++;
+  const bp={lx:cx,ly:y-7,x:cx,y:y+14};
+  if(M.rows)M.rows.forEach((r,i)=>{if(r)M.rows[i]=r.filter(o=>Math.hypot(o.x-bp.lx,o.y-bp.ly)>14)});
+  return M.bp=bp;
+}
+function boardNear(){const bp=boardPos();return bp&&B.tx==null&&Math.hypot(bp.x-B.x,bp.y-B.y)<30}
+function boardDyn(dyn,g,t,WIN){
+  const bp=boardPos();if(!bp)return;
+  dyn.push({y:bp.ly,fn:()=>{const p=proj(bp.lx,bp.ly);if(p)drawBoard(g,p.x,p.y,p.s,t,WIN)}});
+}
+function drawBoard(g,x,y,s,t,WIN){
+  const u=s*1.15;
+  g.fillStyle='rgba(0,0,0,.28)';g.beginPath();g.ellipse(x+u,y,u*5,u*1.1,0,0,7);g.fill();
+  /* stolpar */
+  g.fillStyle='#5a3a1e';g.fillRect(x-u*4.2,y-u*9,u*.9,u*9);g.fillRect(x+u*3.3,y-u*9,u*.9,u*9);
+  /* tavlan */
+  g.fillStyle='#7a5230';g.fillRect(x-u*4.8,y-u*11.5,u*9.6,u*6.2);
+  g.fillStyle=WIN?'#e8eef2':'#c99a5e';g.fillRect(x-u*4.3,y-u*11,u*8.6,u*5.2);
+  /* rader */
+  g.fillStyle='rgba(60,36,16,.55)';for(let i=0;i<3;i++){g.fillRect(x-u*1.6,y-u*(10.1-i*1.5),u*5,u*.45)}
+  ['#e8b84a','#c9ced3','#c07a3e'].forEach((c,i)=>{g.fillStyle=c;g.beginPath();g.arc(x-u*2.6,y-u*(9.9-i*1.5),u*.55,0,7);g.fill()});
+  /* tak */
+  g.fillStyle=WIN?'#f4f7fa':'#8a2a22';g.beginPath();g.moveTo(x-u*5.6,y-u*11.4);g.lineTo(x,y-u*14);g.lineTo(x+u*5.6,y-u*11.4);g.closePath();g.fill();
+  /* pokal på toppen */
+  const by=y-u*15.6+Math.sin(t*2)*u*.2;
+  g.fillStyle='#e8b84a';g.beginPath();g.moveTo(x-u*1.2,by-u*1);g.lineTo(x+u*1.2,by-u*1);g.lineTo(x+u*.7,by+u*.6);g.lineTo(x-u*.7,by+u*.6);g.closePath();g.fill();
+  g.fillRect(x-u*.25,by+u*.6,u*.5,u*.8);g.fillRect(x-u*.8,by+u*1.3,u*1.6,u*.4);
+  g.fillStyle='rgba(255,250,220,.8)';g.fillRect(x-u*.7,by-u*.8,u*.35,u*.9);
+  const na=nightAmt(dayU(t));
+  if(na>.2)LAMPQ.push(()=>{g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(x,by,0,x,by,u*5);gr.addColorStop(0,'rgba(255,210,110,'+(.3*na).toFixed(2)+')');gr.addColorStop(1,'rgba(255,210,110,0)');g.fillStyle=gr;g.beginPath();g.arc(x,by,u*5,0,7);g.fill();g.restore()});
+}
+function bestFish(o){let b=null;for(const id in (o.log||{})){const e=o.log[id];if(FBY[id]&&e&&e.best&&(!b||e.best>b.kg))b={id:id,kg:e.best}}return b}
+function lbName(){
+  if(S.lbName)return S.lbName;const u=CLOUD&&CLOUD.user;
+  return u&&u.displayName?u.displayName.split(' ')[0].slice(0,16):'Fiskare '+(u?u.uid.slice(0,4).toUpperCase():'');
+}
+function boardPush(){
+  if(!CLOUD||!CLOUD.ready||!CLOUD.user||!hasProgress(S))return;
+  const b=bestFish(S);
+  CLOUD.db.collection('board').doc(CLOUD.user.uid).set({name:lbName(),catches:S.catches|0,earned:Math.round((S.stats&&S.stats.earned)||0),
+    bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:'',upd:Date.now()}).catch(()=>{});
+}
+const LB={tab:'catches',cache:{}};
+const LBT=[{id:'catches',n:'Flest fiskar'},{id:'bestKg',n:'Största fisk'},{id:'earned',n:'Mest pengar'}];
+function lbVal(id,d){if(id==='catches')return (d.catches|0)+' st';if(id==='earned')return kr(d.earned||0);
+  const f=FBY[d.bestF];return (f?f.name+' · ':'')+kgTxt(d.bestKg||0)}
+function showBoard(){
+  const n=el('div','lb');n.appendChild(el('h2',null,'Topplistan'));
+  if(!CLOUD||!CLOUD.on){n.appendChild(el('p','sub','Topplistan finns i webbversionen av spelet, där man loggar in och tävlar mot sina kompisar.'));openSheet(n);return}
+  if(!CLOUD.ready){n.appendChild(el('p','sub',CLOUD.err||'Ansluter…'));openSheet(n);return}
+  const tabs=el('div','lb-tabs');LBT.forEach(tb=>{const b=btn(tb.n,LB.tab===tb.id?'gold':'quiet',()=>{LB.tab=tb.id;showBoard()});tabs.appendChild(b)});n.appendChild(tabs);
+  const list=el('ol','lb-list');list.appendChild(el('li','lb-wait','Hämtar…'));n.appendChild(list);
+  const me=CLOUD.user&&CLOUD.user.uid;
+  if(!CLOUD.user){const r=el('div','actions');r.appendChild(btn('Logga in för att vara med','main',showAcctSheet));n.appendChild(r)}
+  else{
+    const row=el('div','lb-me');row.innerHTML='Du syns som <b>'+lbName().replace(/[<>&]/g,'')+'</b>';
+    const ch=el('button','acc-link','Byt namn');ch.type='button';ch.addEventListener('click',()=>{
+      const m=el('div');m.appendChild(el('h2',null,'Ditt namn på topplistan'));
+      const inp=el('input','acc-in');inp.maxLength=16;inp.value=lbName();inp.setAttribute('aria-label','Namn');m.appendChild(inp);
+      const r=el('div','actions');r.appendChild(btn('Spara','main',()=>{const v=inp.value.replace(/[<>&"]/g,'').trim().slice(0,16);S.lbName=v||'';save();boardPush();LB.cache={};setTimeout(showBoard,500)}));
+      r.appendChild(btn('Avbryt','quiet',showBoard));m.appendChild(r);openSheet(m)});
+    row.appendChild(document.createTextNode(' '));row.appendChild(ch);n.appendChild(row);
+  }
+  openSheet(n);
+  const tab=LB.tab,c=LB.cache[tab];
+  const fill=docs=>{if(!list.isConnected)return;list.innerHTML='';
+    if(!docs.length){list.appendChild(el('li','lb-wait','Ingen är med än. Bli först!'));return}
+    docs.forEach((d,i)=>{const li=el('li',d.id===me?'me':'');
+      li.innerHTML='<span class="lb-r">'+(i<3?['🥇','🥈','🥉'][i]:(i+1)+'.')+'</span><span class="lb-n">'+String(d.name||'Fiskare').replace(/[<>&]/g,'')+'</span><span class="lb-v">'+lbVal(tab,d)+'</span>';list.appendChild(li)})};
+  if(c&&Date.now()-c.t<30000){fill(c.d);return}
+  if(CLOUD.user)boardPush();
+  CLOUD.db.collection('board').orderBy(tab,'desc').limit(25).get().then(qs=>{const d=[];qs.forEach(x=>d.push(Object.assign({id:x.id},x.data())));LB.cache[tab]={t:Date.now(),d:d};fill(d)})
+    .catch(()=>{if(list.isConnected){list.innerHTML='';list.appendChild(el('li','lb-wait','Kunde inte hämta topplistan just nu.'))}});
+}
+
 $('mAcct').addEventListener('click',()=>{auInit();showAcctSheet()});
 cloudInit();
 
