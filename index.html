@@ -5792,9 +5792,6 @@ $('btnMenu').addEventListener('click',()=>{
   const rows=el('div','actions');
   rows.appendChild(btn('Fortsätt','main',closeSheet));
   rows.appendChild(btn('Så spelar du','',showHelp));
-  rows.appendChild(btn('Nästa årstid (nu '+SEASONS[S.season|0].n.toLowerCase()+')','gold',()=>{
-    if(specialMap()){toast('Åk tillbaka till Storsjön eller Näkten först.');return}
-    closeSheet();setSeason((S.season|0)+1)}));
   rows.appendChild(mus);rows.appendChild(sfx);
   if(COMP&&!COMP.ended)rows.appendChild(btn('Avbryt tävlingen','quiet',showCompQuit));
   if(CLOUD&&CLOUD.on)rows.appendChild(btn(CLOUD.user?'Konto · sparas i molnet':'Logga in och spara i molnet','quiet',showAcctSheet));
