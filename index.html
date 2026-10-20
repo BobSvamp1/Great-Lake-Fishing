@@ -4047,14 +4047,14 @@ function cabinPress(p){
   if(!CAB.place&&p.x>AQ.x-4&&p.x<AQ.x+AQ.w+4&&p.y>AQ.y-3&&p.y<AQ.y+AQ.h+22){showAquarium();return}
   if(CAB.place){if(p.y>WALL.y0&&p.y<WALL.y1){placeTrophy(p)}else toast('Tryck på väggen');return}
   const i=trophyAt(p);if(i>=0){CAB.drag={i:i,dx:p.x-S.trophies[i].x,dy:p.y-S.trophies[i].y,sx:p.x,sy:p.y};CAB.moved=false;CAB.sel=i}
-  else if(p.x>WALL.x0&&p.x<WALL.x1&&p.y>WALL.y0&&p.y<WALL.y1)showMountPicker();
+  else if(p.x>WALL.x0&&p.x<WALL.x1&&p.y>WALL.y0&&p.y<WALL.y1)CAB.wallTap=true;
 }
 function cabinMove(p){
   const d=CAB.drag;if(!d)return;
   if(Math.hypot(p.x-d.sx,p.y-d.sy)>3)CAB.moved=true;
   if(CAB.moved){const t=S.trophies[d.i];t.x=clamp(p.x-d.dx,WALL.x0+plaqueW(t)/2,WALL.x1-plaqueW(t)/2);t.y=clamp(p.y-d.dy,WALL.y0+plaqueH(t)/2,WALL.y1-plaqueH(t)/2)}
 }
-function cabinRelease(){const d=CAB.drag;CAB.drag=null;if(!d)return;if(CAB.moved){save();CAB.sel=-1}else showTrophyInfo(d.i)}
+function cabinRelease(){if(CAB.wallTap){CAB.wallTap=false;showMountPicker();return}const d=CAB.drag;CAB.drag=null;if(!d)return;if(CAB.moved){save();CAB.sel=-1}else showTrophyInfo(d.i)}
 function showTrophyInfo(i){
   CAB.sel=-1;const t=S.trophies[i],f=FBY[t.id];
   const n=el('div','catch');n.appendChild(el('h2',null,gname(f,t.gold)));
@@ -6167,7 +6167,8 @@ const STOVE={x:80,y:186,w:34,h:38},WOOD={x:56,y:200,w:20,h:16};
 function drawWoodStove(g,t){
   const x=STOVE.x,y=STOVE.y,w=STOVE.w,yb=y+STOVE.h;
   /* rökrör */
-  g.fillStyle='#1e2022';g.fillRect(x+w-10,CEIL-2,6,y-CEIL+4);g.fillStyle='#34373a';g.fillRect(x+w-9,CEIL-2,1.4,y-CEIL+4);
+  const pt=CB.ceil-7;g.fillStyle='#1e2022';g.fillRect(x+w-10,pt,6,y-pt+4);g.fillStyle='#34373a';g.fillRect(x+w-9,pt,1.4,y-pt+4);
+  g.fillStyle='#2a2d30';g.fillRect(x+w-12,CB.ceil-1,10,3);g.fillStyle='#44484c';g.fillRect(x+w-12,CB.ceil-1,10,.8);
   g.fillStyle='#2a2d30';g.fillRect(x+w-11,y-8,8,3);
   /* skugga */
   g.fillStyle='rgba(20,8,0,.45)';g.beginPath();g.ellipse(x+w/2,yb+1,w/2+5,4,0,0,7);g.fill();
@@ -6240,7 +6241,9 @@ function farmSpots(){
   return M.fsp=tri(c.x+ux*30-uy*40,c.y+uy*30+ux*40,0);
 }
 function farmPos(){const L=farmSpots();if(!L)return null;const n=Math.max(1,farmS().pens.length),P=L.slice(0,n);return {x:P.reduce((a,p)=>a+p.x,0)/n,y:P.reduce((a,p)=>a+p.y,0)/n}}
-function farmNear(){const L=farmSpots();if(!L||B.tx!=null)return false;const n=Math.max(1,farmS().pens.length);return L.slice(0,n).some(p=>Math.hypot(p.x-B.x,p.y-B.y)<30)}
+function farmNear(){const L=farmSpots();if(!L||B.tx!=null)return false;const n=Math.max(1,farmS().pens.length);const dp=Math.min(...L.slice(0,n).map(p=>Math.hypot(p.x-B.x,p.y-B.y)));if(dp>=30)return false;
+  /* vid stugans brygga vinner stugan */
+  const c=M.cabin;return dp<Math.hypot(c.x-B.x,c.y-B.y)}
 /* en kasse ritad i rätt perspektiv: ringen projiceras som en riktig cirkel på vattnet */
 function penRing(cx,cy,R,lift){const pts=[];for(let k=0;k<=24;k++){const a=k/24*6.283,p=proj(cx+Math.cos(a)*R,cy+Math.sin(a)*R);if(!p)return null;pts.push([p.x,p.y-lift*p.s])}return pts}
 function farmDyn(dyn,g,t,WIN){
@@ -6369,7 +6372,7 @@ function showFarm(){
     const card=el('div','pen');
     const head=el('div','pen-h');head.appendChild(el('b',null,'Kasse '+(pi+1)+(f?' · '+f.name:' · tom')));head.appendChild(el('span','sub',fish.length+'/'+cap+' fiskar'));card.appendChild(head);
     if(f){
-      const ad=fish.filter(o=>o.kg>=adultKg(f)),avg=fish.reduce((a,o)=>a+o.kg,0)/fish.length,val=ad.reduce((a,o)=>a+Math.round(priceFor(f,o.kg)*FARM_PM*buffV('price')),0);
+      const ad=fish.filter(o=>o.kg>=adultKg(f)),avg=fish.reduce((a,o)=>a+o.kg,0)/fish.length,val=ad.reduce((a,o)=>a+farmPrice(f,o.kg,o),0);
       const fedOk=(pen.fed|0)>=fish.length;
       card.appendChild(el('div','sub','Snittvikt '+kgTxt(avg)+' · '+ad.length+' vuxna · '+(fedOk?'<span class="goldtxt">Matade för i dag</span>':pen.hunger?'<span style="color:#ff9a7a">Hungriga!</span>':'Behöver mat i dag')));
       const bar=el('div','pen-fish');fish.slice().sort((a,b)=>b.kg-a.kg).forEach(o=>{const i=el('button');i.type='button';i.setAttribute('aria-label',f.name+' '+kgTxt(o.kg));const k=clamp(o.kg/farmMax(f),.15,1);i.style.width=Math.round(10+18*k)+'px';i.className=(o.kg>=adultKg(f)?'ad':'');i.addEventListener('click',()=>farmFishInfo(pi,o));bar.appendChild(i)});card.appendChild(bar);
