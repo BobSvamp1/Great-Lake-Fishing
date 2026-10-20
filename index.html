@@ -1070,6 +1070,8 @@ const ACH=[
  {id:'kung',n:'Fjällets legend',d:'???',r:10000,ok:s=>!!s.log.kung,pr:s=>[s.log.kung?1:0,1]},
  {id:'drake',n:'Grottans legend',d:'???',r:15000,ok:s=>!!s.log.drake,pr:s=>[s.log.drake?1:0,1]}
 ];
+/* belöningarna hålls måttliga i förhållande till vad fisken betalar */
+ACH.forEach(a=>{a.r=Math.max(20,Math.round(a.r*0.4/10)*10)});
 const MEDNAME=['Brons','Silver','Guld'],MEDTH=[0.25,0.6,0.88],MEDRW=[25,60,150];
 const medalLevel=(f,kg)=>{const s=(kg-f.kg[0])/(f.kg[1]-f.kg[0]);return s>=MEDTH[2]?3:s>=MEDTH[1]?2:s>=MEDTH[0]?1:0};
 const medalKg=(f,l)=>f.kg[0]+(f.kg[1]-f.kg[0])*MEDTH[l-1];
