@@ -5972,7 +5972,7 @@ function boardPush(){
     bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:'',upd:Date.now()}).catch(()=>{});
 }
 const LB={tab:'catches',cache:{}};
-const LBT=[{id:'catches',n:'Flest fiskar'},{id:'bestKg',n:'Största fisk'},{id:'earned',n:'Mest pengar'}];
+const LBT=[{id:'catches',n:'Flest fiskar'},{id:'bestKg',n:'Största fisk'},{id:'earned',n:'Pengar tjänat'}];
 function lbVal(id,d){if(id==='catches')return (d.catches|0)+' st';if(id==='earned')return kr(d.earned||0);
   const f=FBY[d.bestF];return (f?f.name+' · ':'')+kgTxt(d.bestKg||0)}
 function showBoard(){
