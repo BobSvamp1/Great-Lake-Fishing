@@ -3776,7 +3776,8 @@ function winterFishDraw(t){
 /* --- Kikpimpling: välj djup och pimpla i takt --- */
 const ICE_DEPTH={kung:.88,lax:.5,legend:.55,harr:.22,abborre:.42,gadda:.35,oring:.5,mort:.3,lake:.86,sik:.66,kanada:.76,nors:.46,regnbage:.38,roding:.8,bergsimpa:.92,odjur:.9};
 const MET_L=6,MET_W=14;
-const spotDepthM=()=>F.spot.under==='deep'?20:F.spot.under==='rocks'?14:F.spot.under==='weeds'||F.spot.under==='mud'?7:10;
+/* det verkliga djupet där man står, från djupkartan */
+const spotDepthM=()=>F.spot&&F.spot.depthM>0?Math.max(2,Math.round(F.spot.depthM)):(F.spot.under==='deep'?20:F.spot.under==='rocks'?14:F.spot.under==='weeds'||F.spot.under==='mud'?7:10);
 function ensureIce(){if(F.jd==null){F.jd=S.iceDepth!=null?S.iceDepth:.5;F.jigT=9;F.jigA=0;F.msg=null;F.boost=0;F.drag=false}}
 function setDepth(y){ensureIce();F.jd=clamp((y-BAR_T)/BAR_H,0,1);S.iceDepth=F.jd}
 function winterPress(x,y){
