@@ -979,11 +979,11 @@ function drawBoatMap(g,x,y,s,ang,lvl,sq,t,cu){
 /* ---------- Utrustning ---------- */
 const GEAR={
  rod:{label:'Spöstyrka',items:[
-  {n:'Träspö',p:0,bar:30,line:1,d:'Smal fångstzon'},
-  {n:'Glasfiberspö',p:900,bar:33,line:1,d:'Bredare fångstzon'},
-  {n:'Kolfiberspö',p:2500,bar:37,line:1,d:'Bred fångstzon'},
-  {n:'Proffsspö',p:6000,bar:41,line:1,d:'Mycket bred fångstzon'},
-  {n:'Elitspö',p:12000,bar:46,line:1,d:'Största fångstzonen'}]},
+  {n:'Träspö',p:0,bar:30,line:1,kg:2,d:'Smal fångstzon. Orkar fisk upp till ungefär 2 kg, tyngre fisk drar ner zonen.'},
+  {n:'Glasfiberspö',p:900,bar:33,line:1,kg:4,d:'Bredare fångstzon och drar in lite fortare. Orkar ungefär 4 kg.'},
+  {n:'Kolfiberspö',p:2500,bar:37,line:1,kg:7,d:'Bred fångstzon och drar in fortare. Orkar ungefär 7 kg.'},
+  {n:'Proffsspö',p:6000,bar:41,line:1,kg:11,d:'Mycket bred fångstzon och snabb indragning. Orkar ungefär 11 kg.'},
+  {n:'Elitspö',p:12000,bar:46,line:1,kg:16,d:'Största fångstzonen och snabbast indragning. Orkar ungefär 16 kg.'}]},
  boat:{label:'Båt',items:[
   {n:'Roddbåt',p:0,spd:30,cap:8,d:'Långsam men tyst. Fisken samlas fortare runt dig när du fiskar. Kan inte trolla. Lastrum 8.'},
   {n:'Båt med motor',p:1400,spd:48,cap:16,d:'Snabbare och kan trolla, men motorn skrämmer en del fisk. Lastrum 16.'},
@@ -2847,7 +2847,7 @@ function startReel(){
   const fit=S.winter||RODBY[S.rodSel].fits(p.f,p.kg);
   const nb=newbie(),zh=BAR_H*GEAR.rod.items[S.rod].bar/100*(p.f.beast?0.8:p.f.id==='drake'?0.7:p.f.legend?0.85:1)*(1+.06*mastLvl(p.f.id))*(fit?1.1:0.7)*(1+.3*nb);
   F.reel={fy:BAR_H*0.5,target:BAR_H*0.5,tt:0,hy:BAR_H-zh/2,hv:0,zh:zh,prog:0.3,tick:0,in:false,
-    fb:fb,fit:fit,d:d,line:(1+(curLine().kg-3)/10)*(1+.4*nb),lkg:curLine().kg,kgT:(p.f.beast||p.f.legend)?9:p.kg,nb:nb,teeth:TEETH.indexOf(p.f.id)>=0&&!S.tafsOn,cr:0,el:0,boost:0,bt:rnd(2,3.5),bw:0,bd:0,tn:0,
+    fb:fb,fit:fit,d:d,line:(1+(curLine().kg-3)/10)*(1+.4*nb),lkg:curLine().kg,kgT:(p.f.beast||p.f.legend)?9:p.kg,nb:nb,teeth:TEETH.indexOf(p.f.id)>=0&&!S.tafsOn,cr:0,el:0,pull:clamp(((p.f.beast||p.f.legend)?14:p.kg)/(GEAR.rod.items[S.rod].kg||2)-1,0,1.6)*(1-.6*nb),boost:0,bt:rnd(2,3.5),bw:0,bd:0,tn:0,
     speed:(p.f.beast?150:36+62*(0.5*d+0.5*hard))*fb.sp*wxReelMul()*(1-.3*nb),every:Math.max(0.3,(1.0-0.55*d)*fb.ev)};
   F.state='reel';F.t=0;vib(30);SND.hook();setMood('reel');AU.prog=0.3;
   if(p.f.beast||p.f.legend)SND.beast();
@@ -2877,6 +2877,8 @@ function reelUpdate(dt){
   const sp=r.speed*(burst?1.6:r.boost>0?1.7:1);
   r.fy+=Math.sign(r.target-r.fy)*Math.min(Math.abs(r.target-r.fy),sp*dt);
   if(holding)r.hv-=620*dt;else r.hv+=420*dt;
+  /* tung fisk på för klent spö drar ner zonen */
+  r.hv+=300*r.pull*dt;
   r.hv=clamp(r.hv,-170,190);r.hy+=r.hv*dt;
   const lo=r.zh/2,hi=BAR_H-r.zh/2;
   if(r.hy<lo){r.hy=lo;r.hv=Math.abs(r.hv)*0.25}
@@ -2884,8 +2886,9 @@ function reelUpdate(dt){
   /* linan spänns bara när man drar emot: håller in medan fisken är under den gröna zonen.
      Ryck gör det mycket värre, och tung fisk på klen lina spänner fortare. */
   const below=r.fy>r.hy+r.zh/2-1,wf=Math.pow(Math.max(1,r.kgT/r.lkg),.8);
-  r.strain=holding&&below;
-  if(r.strain)r.tn+=(0.55+0.6*r.d)*(burst?(fb.bp>1?2.6:2.2):1)*wf*(1-.5*r.nb)/r.line*dt;
+  /* under ett ryck spänns linan så fort man håller in, var fisken än är */
+  r.strain=holding&&(below||burst);
+  if(r.strain)r.tn+=(burst?(1.0+0.6*r.d)*(fb.bp>1?1.2:1)*(below?1.3:1):(0.55+0.6*r.d))*wf*(1-.5*r.nb)/r.line*dt;
   else r.tn-=(holding?0.25:0.6)*dt;
   r.tn=clamp(r.tn,0,1.2);
   if(r.tn>=1){lineBreak();return}
@@ -2896,7 +2899,7 @@ function reelUpdate(dt){
     toast((F.pick.f.id==='gadda'?'Gäddan':'Mörkerålen')+' bet av linan! En ståltafs hade klarat tänderna.');vib(200);SND.fail();return}
   r.in=Math.abs(r.fy-r.hy)<r.zh/2;
   if(r.grace>0)r.grace-=dt;
-  r.prog+=(r.in?0.34:(r.grace>0?0:-0.2))*dt;AU.prog=r.prog;
+  r.prog+=(r.in?0.34*(1+.07*S.rod):(r.grace>0?0:-0.2))*dt;AU.prog=r.prog;
   r.tick-=dt;if(r.in&&r.tick<=0){r.tick=0.14;SND.tick(r.prog)}
   if(r.prog>=1){F.state='done';holding=false;setMood('fish');startLanding(F.pick)}
   else if(r.prog<=0){F.state='idle';setMood('fish');toast('Den slet sig!');vib(120);SND.fail()}
