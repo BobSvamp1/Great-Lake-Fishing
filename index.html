@@ -2950,14 +2950,21 @@ const WXINFO={
   fog:{n:'Dimma',start:'Dimman lägger sig över sjön. Något stort rör sig ute på Storsjöflaket...'},
   wind:{n:'Blåst',start:'Det blåser upp. Fisken drar hårdare!'}
 };
+/* när vädret går över: texten beror på om det är dag, skymning eller natt */
+function wxEndTxt(k){
+  const u=dayU(tt),na=nightAmt(u),W0=!!S.winter;
+  if(na>.5)return k==='rain'?(W0?'Snöfallet har slutat. Stjärnorna syns igen.':'Regnet har slutat. Stjärnorna syns igen.'):k==='fog'?'Dimman lättar. Månen lyser över sjön.':'Vinden mojnar. Natten är stilla igen.';
+  if(na>.05||u<.1)return k==='rain'?(W0?'Snöfallet har slutat.':'Regnet har slutat.'):k==='fog'?'Dimman lättar.':'Vinden mojnar.';
+  return W0?'Det klarnar upp igen.':'Solen tittar fram igen.';
+}
 const wxA=k=>WX.k===k&&!(M&&M.def&&M.def.cave)?WX.a:0;
 function wxUpdate(dt){
   if(WX.k==='sun'){WX.next-=dt;if(WX.next<=0){const r=Math.random();WX.k=r<.45?'rain':r<.72?'fog':'wind';WX.dur=rnd(50,90);WX.a=0;
-      const I=WXINFO[WX.k];toast(S.winter&&I.wstart?I.wstart:I.start);wxHud()}}
+      const I=WXINFO[WX.k];toast(WX.k==='fog'&&M.id!=='stor'?'Dimman lägger sig över sjön.':S.winter&&I.wstart?I.wstart:I.start);wxHud()}}
   else{
     WX.dur-=dt;
     if(WX.dur>0)WX.a=Math.min(1,WX.a+dt/6);
-    else{WX.a-=dt/6;if(WX.a<=0){WX.a=0;WX.k='sun';WX.next=rnd(150,300);toast(S.winter?'Det klarnar upp igen.':'Solen tittar fram igen.');wxHud()}}
+    else{WX.a-=dt/6;if(WX.a<=0){WX.a=0;const was=WX.k;WX.k='sun';WX.next=rnd(150,300);toast(wxEndTxt(was));wxHud()}}
   }
   wxAudio(dt);
 }
