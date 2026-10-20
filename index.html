@@ -289,6 +289,8 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .card.tap{cursor:pointer;font:inherit;color:inherit;text-align:left;transition:transform .1s}
 .card.tap:active{transform:scale(.97)}
 .kdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;background:#2a1a0e;box-shadow:inset 0 1px 1px rgba(0,0,0,.6)}
+.rumtxt{color:#9fd6e6;font-style:italic}
+.greet.rumor{border-left:3px solid #9fd6e6}
 .kdot.on{background:radial-gradient(circle at 35% 30%,#fff3b5,#e8b84a);box-shadow:0 0 4px rgba(255,214,90,.6)}
 .notes{display:grid;gap:6px;margin:8px 0;text-align:left}
 .note{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:start;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid var(--line)}
@@ -4509,13 +4511,13 @@ const DZN=['Nära ytan','Mitt i vattnet','Nära botten'],DZP=['nära ytan','mitt
 function knowTick(dt){
   if(F.state==='idle'&&!F.land&&F.t>20)return;
   const E=S.expo||(S.expo={});const add=(c,x)=>{const o=E[c]||(E[c]={});o[x]=(o[x]||0)+dt};
-  add('ph',phaseOf(dayU(clock)));add('wx',wxKey());if(F.spot)add('sp',F.spot.id);add('bt',S.baitSel);add('rd',S.rodSel);
+  add('ph',phaseOf(dayU(clock)));add('wx',wxKey());if(F.spot)add('sp',F.spot.id);add('bt',S.baitSel);add('rd',S.rodSel);add('sea',String(S.season|0));
 }
-function knowEntry(fid){const K=S.know||(S.know={});return K[fid]||(K[fid]={n:0,sp:{},ph:{},wx:{},bt:{},rd:{},dz:[0,0,0]})}
+function knowEntry(fid){const K=S.know||(S.know={});const k=K[fid]||(K[fid]={n:0,sp:{},ph:{},wx:{},bt:{},rd:{},dz:[0,0,0]});if(!k.sea)k.sea={};return k}
 function curDepth(){return S.winter?(F.jd==null?.5:F.jd):clamp((F.dy-128)/162,0,1)}
 /* En slutsats per område, eller null om det är för tidigt att säga */
 function knowSure(k,cat){
-  const o=cat==='dz'?{0:k.dz[0],1:k.dz[1],2:k.dz[2]}:k[cat];const keys=Object.keys(o).filter(x=>o[x]>0);
+  const o=cat==='dz'?{0:k.dz[0],1:k.dz[1],2:k.dz[2]}:(k[cat]||{});const keys=Object.keys(o).filter(x=>o[x]>0);
   const N=keys.reduce((a,x)=>a+o[x],0);if(N<4)return null;
   let sc={};
   if(cat!=='dz'){/* jämför mot hur länge du fiskat med varje: minst två olika måste vara provade */
@@ -4527,31 +4529,70 @@ function knowSure(k,cat){
   if((o[best]||0)<3||bs/tot<.45)return null;
   return best;
 }
-const KCATS=['sp','ph','wx','dz','bt','rd'];
-const KLAB={sp:'Var',ph:'När',wx:'Väder',dz:'Djup',bt:'Bete',rd:'Spö'};
+const KCATS=['sp','sea','ph','wx','dz','bt','rd'];
+const KLAB={sp:'Var',sea:'Årstid',ph:'När',wx:'Väder',dz:'Djup',bt:'Bete',rd:'Spö'};
+const SEAP=['på våren','på sommaren','på hösten','på vintern'];
 function spotNameById(id){for(const m in MAPS){const s=MAPS[m].spots.find(x=>x.id===id);if(s)return s.name}return id}
-function knowName(cat,x){return cat==='sp'?spotNameById(x):cat==='ph'?PHN[x]:cat==='wx'?WXN[x]:cat==='dz'?DZN[x]:cat==='bt'?BAITBY[x].name:RODBY[x].name}
+function knowName(cat,x){return cat==='sea'?SEASONS[+x].n:cat==='sp'?spotNameById(x):cat==='ph'?PHN[x]:cat==='wx'?WXN[x]:cat==='dz'?DZN[x]:cat==='bt'?BAITBY[x].name:RODBY[x].name}
 function knowPhrase(f,cat,x){const n=f.name;
-  return cat==='sp'?n+' hittar du oftast vid '+spotNameById(x)+'.':cat==='ph'?n+' nappar bäst '+PHP[x]+'.':cat==='wx'?n+' nappar bäst '+WXP[x]+'.':
+  return cat==='sea'?n+' nappar bäst '+SEAP[+x]+'.':cat==='sp'?n+' hittar du oftast vid '+spotNameById(x)+'.':cat==='ph'?n+' nappar bäst '+PHP[x]+'.':cat==='wx'?n+' nappar bäst '+WXP[x]+'.':
     cat==='dz'?n+' står oftast '+DZP[x]+'.':cat==='bt'?n+' tar helst '+BAITBY[x].name.toLowerCase()+'.':n+' fångar du bäst med '+RODBY[x].name.toLowerCase()+'.'}
 function knowLevel(fid){const k=S.know&&S.know[fid];if(!k)return 0;return KCATS.filter(c=>knowSure(k,c)!=null).length}
 function knowRecord(c){
   if(c.f.beast||c.f.legend)return [];
   const k=knowEntry(c.f.id),before={};KCATS.forEach(cat=>before[cat]=knowSure(k,cat));
   const inc=(o,x)=>o[x]=(o[x]||0)+1;
-  k.n++;inc(k.sp,c.spotId);inc(k.ph,phaseOf(dayU(clock)));inc(k.wx,wxKey());inc(k.bt,S.baitSel);inc(k.rd,S.rodSel);
+  k.n++;inc(k.sea,String(S.season|0));inc(k.sp,c.spotId);inc(k.ph,phaseOf(dayU(clock)));inc(k.wx,wxKey());inc(k.bt,S.baitSel);inc(k.rd,S.rodSel);
   const dz=curDepth();k.dz[dz<.34?0:dz<.67?1:2]++;
   const out=[];KCATS.forEach(cat=>{const a=knowSure(k,cat);if(a!=null&&a!==before[cat])out.push(knowPhrase(c.f,cat,a))});
   return out;
 }
+/* Rykten: Fiskhandlaren berättar en sak om dagen om en art, så att man lär sig var och hur man fiskar.
+   Ryktet står i anteckningarna tills man själv har bekräftat det genom att fånga fisken. */
+/* var arterna faktiskt är vanligast, uppmätt med simulering över alla tider och årstider */
+const RUMSP={harr:['forsen','mansta','badhus'],abborre:['stillan','rodon','langviken','norderon'],gadda:['stillan','rodon','gillhov'],oring:['laxhalan','nedreforsen','mansta'],
+ mort:['svenstavik','badhus'],lake:['fjalldjupet','flaket','monaset'],sik:['monaset','hackas','tunvagen'],kanada:['flaket','fjalldjupet'],nors:['hackas','svenstavik'],
+ regnbage:['rodon','svenstavik'],roding:['fjalldjupet','kallkallan','gillhov','monaset'],bergsimpa:['mansta','hackas'],lax:['laxhalan']};
+function spotWhere(id){for(const d of MAPDEF){const sp=MAPS[d.id].spots.find(x=>x.id===id);if(sp)return sp.name+(sp.name.indexOf(d.name)>=0?'':(d.id==='fjall'?' på ':' i ')+d.name)}return id}
+function rumorTruth(f,cat){
+  const H=HABIT[f.id]||{};const am=o=>{let b=null,v=1.04;for(const x in o)if(o[x]>v){v=o[x];b=x}return b};
+  if(cat==='sp'){const L=RUMSP[f.id];return L?L[Math.floor(Math.random()*L.length)]:null}
+  if(cat==='sea'){let b=null,v=1.04;SEASONS.forEach((se,i)=>{const m=(se.mul||{})[f.id]||1;if(m>v){v=m;b=String(i)}});return b}
+  if(cat==='ph')return H.ph?am(H.ph):null;
+  if(cat==='wx')return H.wx?am(H.wx):null;
+  if(cat==='dz')return H.d==null?null:H.d<.34?'0':H.d<.67?'1':'2';
+  if(cat==='bt'){const b=BAITS.find(b=>(!b.secret||S.baits[b.id])&&b.fav.indexOf(f.id)>=0);return b?b.id:null}
+  if(cat==='rd'){const mid=(f.kg[0]+f.kg[1])/2,r=RODS.find(r=>r.fits(f,mid));return r?r.id:null}
+  return null;
+}
+function rumorPhrase(f,cat,x){const n=f.name.toLowerCase();
+  return cat==='sp'?'Jag hörde att det ska finnas gott om '+n+' vid '+spotWhere(x)+'.':cat==='sea'?'Folk säger att '+n+' nappar som bäst '+SEAP[+x]+'.':
+    cat==='ph'?'En kund svor på att '+n+' nappar bäst '+PHP[x]+'.':cat==='wx'?'Gamla gubbar menar att '+n+' nappar bäst '+WXP[x]+'.':
+    cat==='dz'?'Har du testat att fiska '+DZP[x]+' efter '+n+'? Det sägs att den står där.':cat==='bt'?'Ska du ha '+n+' lär '+BAITBY[x].name.toLowerCase()+' vara det bästa.':
+    'Till '+n+' säger de att '+RODBY[x].name.toLowerCase()+' är det rätta.'}
+function rumorToday(){
+  const day=Math.floor((tt+0.1*DAY)/DAY);S.rum=S.rum||{};
+  if(S.rumDay===day)return S.rumTxt?'<b>Fiskhandlaren:</b> '+S.rumTxt:null;
+  const reach=FISH.filter(f=>!f.beast&&!f.legend&&!f.cave&&rumorTruth(f,'sp')!=null);
+  const opts=[];
+  reach.forEach(f=>{const k=S.know&&S.know[f.id],R=S.rum[f.id]||{};
+    const cats=S.log[f.id]?KCATS:['sp'];
+    cats.forEach(c=>{if(R[c]!=null)return;if(k&&knowSure(k,c)!=null)return;const v=rumorTruth(f,c);if(v!=null)opts.push([f,c,v,S.log[f.id]?1:2])})});
+  S.rumDay=day;
+  if(!opts.length){S.rumTxt='';save();return null}
+  const w=opts.reduce((a,o)=>a+o[3],0);let r=Math.random()*w,pick=opts[0];for(const o of opts){r-=o[3];if(r<=0){pick=o;break}}
+  const [f,c,v]=pick;(S.rum[f.id]=S.rum[f.id]||{})[c]=v;S.rumTxt=rumorPhrase(f,c,v);save();
+  return '<b>Fiskhandlaren:</b> '+S.rumTxt;
+}
 /* Artsidan med dina anteckningar */
 function knowLine(f,k,cat){
-  if(!k||!k.n)return '<span class="sub">???</span>';
+  const rv=S.rum&&S.rum[f.id]&&S.rum[f.id][cat],rum=rv!=null?'<span class="rumtxt">Rykte: '+knowName(cat,rv)+'</span>':'';
+  if(!k||!k.n)return rum||'<span class="sub">???</span>';
   const sure=knowSure(k,cat),o=cat==='dz'?{0:k.dz[0],1:k.dz[1],2:k.dz[2]}:k[cat];
   const list=Object.keys(o).filter(x=>o[x]>0).sort((a,b)=>o[b]-o[a]).map(x=>knowName(cat,x)+' '+o[x]).join(' · ');
-  return (sure!=null?'<span class="goldtxt">Bäst: '+knowName(cat,sure)+'</span><br>':'')+'<span class="sub">'+list+'</span>';
+  return (sure!=null?'<span class="goldtxt">Bäst: '+knowName(cat,sure)+(rv!=null&&String(rv)===String(sure)?' ✓':'')+'</span><br>':rum?rum+'<br>':'')+'<span class="sub">'+list+'</span>';
 }
-function knowDots(lv){let s='';for(let i=0;i<6;i++)s+='<span class="kdot'+(i<lv?' on':'')+'"></span>';return s}
+function knowDots(lv){let s='';for(let i=0;i<KCATS.length;i++)s+='<span class="kdot'+(i<lv?' on':'')+'"></span>';return s}
 function showSpecies(fid){
   const f=FBY[fid],e=S.log[fid],k=S.know&&S.know[fid];
   const n=el('div','catch');
@@ -4560,14 +4601,14 @@ function showSpecies(fid){
   n.appendChild(bigFish(f,f.beast?200:140,false,!!(S.golden&&S.golden[fid])));
   n.appendChild(el('p',null,'Rekord <b>'+kgTxt(e.best)+'</b> · Fångade '+e.n+' st'+(S.golden&&S.golden[fid]?' · <span class="goldtxt">Gyllene '+S.golden[fid]+'</span>':'')));
   if(f.beast||f.legend){n.appendChild(el('p','sub',f.tip));const row=el('div','actions');row.appendChild(btn('Stäng','main',closeSheet));n.appendChild(row);openSheet(n);return}
-  n.appendChild(el('p','sub','Förekomst: '+RARLAB[f.r]+' · Väger oftast '+kgTxt(f.kg[0])+' till '+kgTxt(f.kg[1])+', bjässar upp mot '+kgTxt(f.max)+'.'));
+  n.appendChild(el('p','sub','Förekomst: '+RARLAB[f.r]+' · Väger oftast '+kgTxt(f.kg[0])+' till '+kgTxt(f.kg[1])+', bjässar upp mot '+kgTxt(f.max)+' och någon enstaka gång ännu större.'));
   const lv=knowLevel(fid);
   n.appendChild(el('h3',null,'Dina anteckningar'));
-  n.appendChild(el('p','sub','Kunskap '+knowDots(lv)+' '+lv+' av 6'));
+  n.appendChild(el('p','sub','Kunskap '+knowDots(lv)+' '+lv+' av '+KCATS.length));
   const box=el('div','notes');
   KCATS.forEach(cat=>{const r=el('div','note');r.appendChild(el('b',null,KLAB[cat]));r.appendChild(el('div',null,knowLine(f,k,cat)));box.appendChild(r)});
   n.appendChild(box);
-  n.appendChild(el('p','greet',lv>=6?'Du kan den här arten utan och innan.':(k&&k.n?'Siffrorna är hur många du fångat. En slutsats dyker upp först när du provat flera platser, tider, väder, beten och spön och ser en tydlig skillnad.':'Inga anteckningar än.')));
+  n.appendChild(el('p','greet',lv>=KCATS.length?'Du kan den här arten utan och innan.':(k&&k.n?'Siffrorna är hur många du fångat. En slutsats dyker upp först när du provat flera platser, årstider, tider, väder, beten och spön och ser en tydlig skillnad. Rykten från Fiskhandlaren står i blått tills du själv har bekräftat dem.':'Inga anteckningar än.')));
   const row=el('div','actions');row.appendChild(btn('Stäng','main',closeSheet));n.appendChild(row);
   openSheet(n);
 }
@@ -4963,7 +5004,7 @@ function showHarbor(tab){
   const back=btn('‹ Hamnen','small quiet back',showHarborHub);n.appendChild(back);
   const ban=el('div','shop-banner '+shop);const art=shopArtCopy(shop);art.className='hub-art';ban.appendChild(art);
   ban.appendChild(el('span','plate',d.name));n.appendChild(ban);
-  n.appendChild(el('p','greet',d.greet));
+  {const rm=shop==='fish'?rumorToday():null;n.appendChild(el('p','greet'+(rm?' rumor':''),rm||d.greet))}
   n.appendChild(el('p','sub','Pengar: <b>'+kr(S.money)+'</b>'));
   const tabs=el('div','tabs');
   d.tabs.forEach(t=>{
