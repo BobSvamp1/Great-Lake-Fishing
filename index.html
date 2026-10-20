@@ -471,7 +471,7 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 </div>
 <div id="bar">
   <button class="btn" id="btnLog" type="button">Loggbok</button>
-  <button class="btn" id="btnGear" type="button" hidden>Spö &amp; bete</button>
+  <button class="btn" id="btnGear" type="button" hidden>Fiskelådan</button>
   <button class="btn main" id="btnAct" type="button">Tryck på sjön</button>
   <button class="btn" id="btnMenu" type="button">Meny</button>
 </div>
@@ -4823,7 +4823,7 @@ function harborOrders(n){
 }
 function harborRods(n){
   n.appendChild(el('h3',null,'Spöstyper'));
-  n.appendChild(el('p','sub','Olika spön passar olika fisk. Du väljer spö med knappen Spö & bete när du fiskar.'));
+  n.appendChild(el('p','sub','Olika spön passar olika fisk. Du väljer spö i Fiskelådan när du fiskar.'));
   RODS.forEach(r=>{
     const right=S.rods[r.id]?el('span','max','Äger'):buyBtn(r.p,()=>buyRod(r.id));
     n.appendChild(shopRow(r.name,'Passar: '+r.txt,right,1));
