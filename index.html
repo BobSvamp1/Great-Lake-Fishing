@@ -4319,9 +4319,21 @@ function saveClock(){try{S.tt=tt%(DAY*100);localStorage.setItem(SAVE,JSON.string
 setInterval(()=>{if(mode!=='menu')saveClock()},15000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveClock()});
 window.addEventListener('pagehide',saveClock);
+/* Meddelanden högst upp: står kvar länge nog att hinna läsa, längre text står längre.
+   Kommer ett nytt medan det gamla visas får det gamla alltid sin minsta lästid först. */
+const TQ={q:[],cur:null,t0:0,min:0};
 function toast(msg){
-  const e=$('toast');e.textContent=msg;e.hidden=false;
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.hidden=true},2600);
+  msg=String(msg||'');if(!msg)return;
+  if(TQ.cur===msg||TQ.q.indexOf(msg)>=0)return;
+  TQ.q.push(msg);if(TQ.q.length>4)TQ.q.splice(0,TQ.q.length-4);
+  if(!TQ.cur)toastNext();else{const left=TQ.min-(performance.now()-TQ.t0);clearTimeout(toastTimer);toastTimer=setTimeout(toastNext,Math.max(0,left))}
+}
+function toastNext(){
+  const e=$('toast');clearTimeout(toastTimer);
+  const msg=TQ.q.shift();if(!msg){TQ.cur=null;e.hidden=true;return}
+  TQ.cur=msg;TQ.t0=performance.now();const n=msg.length;TQ.min=1200+n*45;
+  e.textContent=msg;e.hidden=false;
+  toastTimer=setTimeout(toastNext,TQ.q.length?TQ.min:Math.min(9000,2200+n*60));
 }
 function updateHUD(){
   $('money').textContent=Math.round(S.money).toLocaleString('sv-SE');
