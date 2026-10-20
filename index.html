@@ -2852,7 +2852,7 @@ function newTarget(r){
   r.target=clamp(t,8,BAR_H-8);r.tt=r.every*rnd(0.6,1.4);
 }
 function lineBreak(){
-  if(F.reel){F.reel.tn=1.2;F.snapT=1.3;F.state='snap'}else F.state='idle';holding=false;setMood('fish');toast('Linan gick av! Släpp efter när fisken ryckar.');vib(200);SND.fail();
+  if(F.reel){F.reel.tn=1.2;F.snapT=1.3;F.state='snap'}else F.state='idle';holding=false;setMood('fish');toast('Linan gick av! Släpp efter när fisken rycker.');vib(200);SND.fail();
 }
 function reelUpdate(dt){
   const r=F.reel,fb=r.fb;r.tt-=dt;if(r.boost>0)r.boost-=dt;
