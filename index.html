@@ -5190,8 +5190,8 @@ function gearIcon(kind,id){
   return c;
 }
 function showGear(){
-  if(mode!=='fish'||(F.state!=='idle'&&F.state!=='waiting'))return;
-  const waiting=F.state==='waiting';
+  if(mode!=='fish'||!gearOk())return;
+  const waiting=!S.winter&&F.state==='waiting';
   let focus=null;
   const n=el('div','tbw');
   n.appendChild(el('h2',null,'Fiskelådan'));
@@ -5774,8 +5774,10 @@ function showAquarium(){
   n.appendChild(grid);const row=el('div','actions');row.appendChild(btn('Stäng','main',closeSheet));n.appendChild(row);openSheet(n);
 }
 let gearShown=null;
+/* på isen kan man byta när som helst utom när fisken nappar eller drillas */
+function gearOk(){if(F.land)return false;if(S.winter)return ['reel','bite','snap','done'].indexOf(F.state)<0;return F.state==='idle'||F.state==='waiting'}
 function updateGear(){
-  const show=(mode==='fish'&&(F.state==='idle'||F.state==='waiting'))||mode==='cabin';
+  const show=(mode==='fish'&&gearOk())||mode==='cabin';
   const key=show+mode;if(key===gearShown)return;gearShown=key;
   $('btnGear').hidden=!show;$('bar').classList.toggle('g',show);
   $('btnGear').textContent=mode==='cabin'?'Häng upp':'Fiskelådan';
