@@ -4405,7 +4405,8 @@ function closeSheet(){$('sheet').hidden=true;sheetOpen=false;lockSheet=false}
 $('sheet').addEventListener('pointerdown',e=>{if(e.target===$('sheet')&&!lockSheet)closeSheet()});
 function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
 function btn(label,cls,fn){const b=el('button','btn '+(cls||''),label);b.type='button';if(fn)b.addEventListener('click',fn);return b}
-const speciesCount=()=>Object.keys(S.log).length;
+const allSp=()=>FISH.filter(f=>!f.beast&&!f.legend);
+const speciesCount=()=>allSp().filter(f=>S.log[f.id]).length;
 const visFish=()=>FISH.filter(f=>!f.cave||S.log[f.id]);
 
 /* ---------- Så spelar du: kort med bilder från spelet ---------- */
@@ -4479,7 +4480,7 @@ function showLog(tab){
   if(typeof tab==='string')logTab=tab;
   const n=el('div');
   n.appendChild(el('h2',null,'Loggbok'));
-  n.appendChild(el('p','sub','Arter '+speciesCount()+' av '+visFish().length+' · Fångster '+S.catches));
+  n.appendChild(el('p','sub','Arter '+speciesCount()+' av '+allSp().length+' · Fångster '+S.catches));
   const tabs=el('div','tabs');
   [['catch','Fångster'],['map','Fiskekarta'],['rec','Rekordjakt'],['ach','Prestationer']].forEach(t=>{
     const b=el('button','tab'+(logTab===t[0]?' on':''),t[1]);b.type='button';b.addEventListener('click',()=>showLog(t[0]));tabs.appendChild(b);
@@ -4715,7 +4716,7 @@ function logCatch(n){
   n.appendChild(el('h3',null,'Arter'));
   n.appendChild(el('p','sub','Tryck på en art du fångat för att se dina anteckningar om var, när och hur den nappar.'));
   const grid=el('div','grid');
-  visFish().forEach(f=>{
+  allSp().concat(visFish().filter(f=>f.beast||f.legend)).forEach(f=>{
     const e=S.log[f.id];
     const c=el(e?'button':'div','card'+(e?' tap':' locked'));if(e){c.type='button';c.addEventListener('click',()=>showSpecies(f.id))}
     c.appendChild(bigFish(f,f.beast?100:84,!e,!!(S.golden&&S.golden[f.id])));
@@ -5795,7 +5796,7 @@ function fishCard(){
   if(!S.cardNo){S.cardNo=1+Math.floor(Math.random()*9998);save()}
   $('fcNo').textContent='Nr '+String(S.cardNo).padStart(4,'0');
   $('fcMoney').textContent=kr(S.money);
-  $('fcSp').textContent=speciesCount()+' av '+visFish().length;
+  $('fcSp').textContent=speciesCount()+' av '+allSp().length;
   const best=Object.entries(S.log||{}).filter(e=>FBY[e[0]]&&e[1].best>0).sort((a,b)=>b[1].best-a[1].best)[0];
   $('fcBest').textContent=best?FBY[best[0]].name+' '+kgTxt(best[1].best):'Ingen än';
 }
