@@ -4625,7 +4625,7 @@ function harborDepth(n){
   n.appendChild(el('p','sub','Ett djupkort berättar inte var fisken finns, det får du lära dig själv. Men det visar hur djupt det är, och djupet spelar roll för vilka fiskar som trivs.'));
   DEPTHMAPS.forEach(m=>{
     let right;
-    if(hasDepth(m.id))right=el('span','max','Har');
+    if(hasDepth(m.id))right=el('span','max','Äger');
     else if(m.id==='nak'&&!S.nakten){right=btn('Köp '+kr(m.p),'small');right.disabled=true}
     else right=buyBtn(m.p,()=>{if(S.money<m.p)return;S.money-=m.p;S.depth=S.depth||{};S.depth[m.id]=1;save();updateHUD();SND.buy();showHarbor();toast('Köpte '+m.name+'.')});
     n.appendChild(shopRow(m.name,m.d+(m.id==='nak'&&!S.nakten?' Lås upp Näkten först.':''),right));
@@ -4798,7 +4798,7 @@ function tierLadder(n,cat,intro){
   g.items.forEach((it,i)=>{
     if(cat==='sonar'&&i===0)return;
     let right;
-    if(i<=S[cat])right=el('span','max',i===S[cat]?'Har':'Klar');
+    if(i<=S[cat])right=el('span','max',i===S[cat]?'Äger':'Klar');
     else if(i===S[cat]+1)right=buyBtn(it.p,()=>buy(cat));
     else{right=btn('Köp '+kr(it.p),'small');right.disabled=true}
     n.appendChild(shopRow(it.n,it.d,right,1));
@@ -4825,7 +4825,7 @@ function harborRods(n){
   n.appendChild(el('h3',null,'Spöstyper'));
   n.appendChild(el('p','sub','Olika spön passar olika fisk. Du väljer spö med knappen Spö & bete när du fiskar.'));
   RODS.forEach(r=>{
-    const right=S.rods[r.id]?el('span','max','Har'):buyBtn(r.p,()=>buyRod(r.id));
+    const right=S.rods[r.id]?el('span','max','Äger'):buyBtn(r.p,()=>buyRod(r.id));
     n.appendChild(shopRow(r.name,'Passar: '+r.txt,right,1));
   });
   n.appendChild(el('h3',null,'Spöstyrka'));
@@ -4835,15 +4835,15 @@ function harborBait(n){
   n.appendChild(el('p','sub','Rätt bete lockar rätt fisk. Byt bete före kastet.'));
   BAITS.forEach(bt=>{
     if(bt.secret)return;
-    const right=S.baits[bt.id]?el('span','max','Har'):buyBtn(bt.p,()=>buyBait(bt.id));
+    const right=S.baits[bt.id]?el('span','max','Äger'):buyBtn(bt.p,()=>buyBait(bt.id));
     n.appendChild(shopRow(bt.name,bt.d,right,1));
   });
 }
 function harborLine(n){
   n.appendChild(el('p','sub','Linan avgör hur tung fisk du klarar innan den går av. Byt lina i Fiskelådan.'));
-  LINES.forEach(l=>{const right=S.lines[l.id]?el('span','max','Har'):buyBtn(l.p,()=>buyLine(l.id));n.appendChild(shopRow(l.name,l.d,right,1))});
+  LINES.forEach(l=>{const right=S.lines[l.id]?el('span','max','Äger'):buyBtn(l.p,()=>buyLine(l.id));n.appendChild(shopRow(l.name,l.d,right,1))});
   n.appendChild(el('h3',null,'Tillbehör'));
-  n.appendChild(shopRow('Ståltafs',TAFS.d,S.tafs?el('span','max','Har'):buyBtn(TAFS.p,buyTafs),1));
+  n.appendChild(shopRow('Ståltafs',TAFS.d,S.tafs?el('span','max','Äger'):buyBtn(TAFS.p,buyTafs),1));
 }
 function buyLine(id){const l=LINEBY[id];if(S.lines[id]||S.money<l.p)return;S.money-=l.p;S.lines[id]=1;S.lineSel=id;save();updateHUD();SND.buy();showHarbor();toast('Köpte '+l.name)}
 function buyTafs(){if(S.tafs||S.money<TAFS.p)return;S.money-=TAFS.p;S.tafs=1;S.tafsOn=1;save();updateHUD();SND.buy();showHarbor();toast('Köpte ståltafs. Den sitter på nu, du kan ta av den i Fiskelådan.')}
