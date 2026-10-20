@@ -2835,6 +2835,8 @@ function updateSchool(dt){
   if(biter){F.pick=biter.p;F.state='bite';F.t=0;vib(50);SND.bite()}
 }
 const silCache={};
+/* hur stor fisken ser ut beror på hur mycket den faktiskt väger, inte hur stor den är för sin art */
+const kgW=kg=>Math.log2(1+Math.max(0,kg)*2)/Math.log2(33);
 function silFish(f,w,col){const k=f.id+'|'+w+'|'+col;return silCache[k]||(silCache[k]=bigFish(f,w,col))}
 function startReel(){
   const p=F.pick,d=0.3+0.7*p.frac,hard=clamp(p.f.pk/200,0,1),fb=FIGHT[p.f.id]||FIGHT.abborre;
@@ -3455,12 +3457,12 @@ function fishDraw(t){
   if(S.sonar>=1&&(st==='idle'||st==='casting'||st==='waiting')){
     for(const s of F.school){
       const f=s.p.f,rc=f.r;
-      const w=Math.round(8+22*Math.max(0.15,s.p.frac)*(f.wide?0.8:1)+(f.beast?20:0));
+      const w=Math.round(7+30*clamp(kgW(s.p.kg),0,1.15)*(f.wide?0.9:1)+(f.beast?20:0));
       const col=S.sonar>=2?(rc>=4?'#b98aee':rc===3?'#f06a42':rc===2?'#7fd46a':'#c4e8f2'):'#0d2c40';
       drawFish(g,f,s.x,s.y,w,s.vx<0,s.p.gold?.95:S.sonar>=2?0.8:0.55,s.p.gold?'gold':col);if(s.p.gold)goldSparkle(g,s.x,s.y,w,t);
     }
   }
-  if(haveFish){const hw=clamp(14+F.pick.frac*18,14,34)*(F.pick.f.beast?1.6:1);drawFish(g,F.pick.f,fx,fy,hw,true,1,F.pick.gold?'gold':undefined);if(F.pick.gold)goldSparkle(g,fx,fy,hw,t)}
+  if(haveFish){const hw=clamp(12+26*kgW(F.pick.kg),12,40)*(F.pick.f.beast?1.6:1);drawFish(g,F.pick.f,fx,fy,hw,true,1,F.pick.gold?'gold':undefined);if(F.pick.gold)goldSparkle(g,fx,fy,hw,t)}
   g.fillStyle=dayTint(u);g.fillRect(0,0,W,H);
   if(mode==='fish'&&S.sonar>=3&&(st==='idle'||st==='casting'||st==='waiting')){
     for(const s of F.school)txt(s.p.f.name+' '+kgTxt(s.p.kg),s.x,s.y-9,{size:6,col:'#e9f7fb'});
@@ -3692,7 +3694,7 @@ function winterFishDraw(t){
   g.save();g.beginPath();g.ellipse(ICE.x,ICE.y,ICE.rx-2,ICE.ry-2,0,0,7);g.clip();
   if(st==='idle'||st==='casting'||st==='waiting'){
     const sorted=F.school.slice().sort((a,b)=>(b.d||0)-(a.d||0));
-    for(const s of sorted){if(Math.hypot(s.x-hx,s.y-hy)<24)continue;const f=s.p.f,d=s.d||.5,w=Math.round((10+24*Math.max(.15,s.p.frac)*(f.wide?1.2:1)+(f.beast?40:0))*(1-d*.35));
+    for(const s of sorted){if(Math.hypot(s.x-hx,s.y-hy)<24)continue;const f=s.p.f,d=s.d||.5,w=Math.round((9+30*clamp(kgW(s.p.kg),0,1.15)*(f.wide?1.1:1)+(f.beast?40:0))*(1-d*.35));
       const near=Math.abs(d-(F.jd==null?.5:F.jd))<.14;
       const col=S.sonar>=2?(f.r>=4?'#b98aee':f.r===3?'#f06a42':f.r===2?'#7fd46a':null):null;
       const dir=s.att>.2?(BX>s.x?1:-1):(s.vx>0?1:-1);
@@ -3701,7 +3703,7 @@ function winterFishDraw(t){
   }
   let fx=hx,fy=hy;
   if(st==='reel'&&F.reel){fx=hx+Math.sin(t*7)*8;fy=hy+(F.reel.fy/BAR_H-.5)*70;const f=F.pick.f;
-    drawFishTop(g,f,fx,fy,clamp(16+F.pick.frac*20,16,36)*(f.beast?2:1),Math.cos(t*7)>0?1:-1,1,t*2,F.pick.gold?'#e8b42c':undefined);
+    drawFishTop(g,f,fx,fy,clamp(14+26*kgW(F.pick.kg),14,40)*(f.beast?2:1),Math.cos(t*7)>0?1:-1,1,t*2,F.pick.gold?'#e8b42c':undefined);
     g.strokeStyle='rgba(236,244,240,.6)';g.lineWidth=.4;g.beginPath();g.moveTo(hx,hy);g.lineTo(fx,fy);g.stroke()}
   g.restore();
   g.drawImage(winterOverlay(),0,0,W,H);
@@ -3709,7 +3711,7 @@ function winterFishDraw(t){
   /* fiskar vid pimpeln syns genom hålet, och den som hugger ligger kvar */
   {const near=[];if(st==='idle'||st==='casting'||st==='waiting')F.school.forEach(s=>{if(Math.hypot(s.x-hx,s.y-hy)<24)near.push(s)});
    if(st==='bite'&&F.bfish)near.push(F.bfish);
-   for(const s of near){const f=s.p.f,d=s.d||.5,w=Math.round((10+24*Math.max(.15,s.p.frac)*(f.wide?1.2:1)+(f.beast?40:0))*(1-d*.35));
+   for(const s of near){const f=s.p.f,d=s.d||.5,w=Math.round((9+30*clamp(kgW(s.p.kg),0,1.15)*(f.wide?1.1:1)+(f.beast?40:0))*(1-d*.35));
      const bx=s===F.bfish?hx+Math.sin(t*22)*1.2+w*.18:s.x,by=s===F.bfish?hy+1.5:s.y,dir=s===F.bfish?-1:(s.att>.2?(BX>s.x?1:-1):(s.vx>0?1:-1));
      const col=S.sonar>=2?(f.r>=4?'#b98aee':f.r===3?'#f06a42':f.r===2?'#7fd46a':null):null;
      g.save();g.beginPath();g.ellipse(ICE.x,ICE.y,ICE.rx-2,ICE.ry-2,0,0,7);g.clip();
