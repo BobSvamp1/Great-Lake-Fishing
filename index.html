@@ -993,12 +993,12 @@ const GEAR={
   {n:'Proffsekolod',p:8000,d:'Visar art och vikt på varje fisk och lockar större fisk'}]}
 };
 const RODS=[
- {id:'spinn',name:'Spinnspö',p:0,txt:'abborre, mört, lake, sik, bergsimpa och gädda upp till 5 kg',
-  fits:(f,kg)=>['abborre','mort','lake','sik','bergsimpa','blind','lykt'].indexOf(f.id)>=0||(f.id==='gadda'&&kg<=5)},
+ {id:'spinn',name:'Spinnspö',p:0,txt:'abborre, mört, lake, sik, nors, bergsimpa och gädda upp till 5 kg',
+  fits:(f,kg)=>['abborre','mort','lake','sik','nors','bergsimpa','blind','lykt'].indexOf(f.id)>=0||(f.id==='gadda'&&kg<=5)},
  {id:'fly',name:'Flugspö',p:1600,txt:'harr, regnbåge, nors, lax och öring upp till 3 kg',
   fits:(f,kg)=>['harr','regnbage','nors','kristall','lax'].indexOf(f.id)>=0||(f.id==='oring'&&kg<=3)},
- {id:'troll',name:'Trollingspö',p:2800,txt:'gädda, öring, lax, kanadaröding, röding och det som kan lura i djupet. Låter dig också trolla från en motorbåt: kör sakta ute på sjön så släpar du betet efter båten',
-  fits:(f,kg)=>['kanada','roding','odjur','legend','morkeral','drake','kung','gadda','oring','lax'].indexOf(f.id)>=0}
+ {id:'troll',name:'Trollingspö',p:2800,txt:'gädda, öring, lax, kanadaröding, röding, storabborre, sik och det som kan lura i djupet. Låter dig också trolla från en motorbåt: kör sakta ute på sjön så släpar du betet efter båten',
+  fits:(f,kg)=>['kanada','roding','odjur','legend','morkeral','drake','kung','gadda','oring','lax','sik'].indexOf(f.id)>=0||(f.id==='abborre'&&kg>=.5)}
 ];
 const RODBY={};RODS.forEach(r=>RODBY[r.id]=r);
 const BAITS=[
@@ -2833,7 +2833,8 @@ const silCache={};
 function silFish(f,w,col){const k=f.id+'|'+w+'|'+col;return silCache[k]||(silCache[k]=bigFish(f,w,col))}
 function startReel(){
   const p=F.pick,d=0.3+0.7*p.frac,hard=clamp(p.f.pk/200,0,1),fb=FIGHT[p.f.id]||FIGHT.abborre;
-  const fit=RODBY[S.rodSel].fits(p.f,p.kg);
+  /* på isen pimplar man med pimpelspö, så där blir det aldrig fel spö */
+  const fit=S.winter||RODBY[S.rodSel].fits(p.f,p.kg);
   const nb=newbie(),zh=BAR_H*GEAR.rod.items[S.rod].bar/100*(p.f.beast?0.8:p.f.id==='drake'?0.7:p.f.legend?0.85:1)*(1+.06*mastLvl(p.f.id))*(fit?1.1:0.7)*(1+.3*nb);
   F.reel={fy:BAR_H*0.5,target:BAR_H*0.5,tt:0,hy:BAR_H-zh/2,hv:0,zh:zh,prog:0.3,tick:0,in:false,
     fb:fb,fit:fit,d:d,line:(1+(curLine().kg-3)/10)*(1+.4*nb),lkg:curLine().kg,kgT:(p.f.beast||p.f.legend)?9:p.kg,nb:nb,teeth:TEETH.indexOf(p.f.id)>=0&&!S.tafsOn,cr:0,el:0,boost:0,bt:rnd(2,3.5),bw:0,bd:0,tn:0,
