@@ -86,6 +86,14 @@ body.inmenu #hud,body.inmenu #bar{display:none}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .gear{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
 .gear .name{font-weight:700}
+.gear .ib{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:4px;padding:0;border-radius:50%;border:1.5px solid currentColor;background:none;color:inherit;font:700 italic 13px Georgia,serif;opacity:.7;vertical-align:1px;cursor:pointer}
+.gear .ib.on{opacity:1;background:#e8b84a;border-color:#e8b84a;color:#2a1a0e}
+.gear .bubble{position:relative;margin-top:9px;padding:9px 11px;border-radius:10px;background:#fff4dc;color:#3a2414;font-size:14px;line-height:1.35;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.gear .bubble::before{content:'';position:absolute;top:-6px;left:18px;border:6px solid transparent;border-top:0;border-bottom-color:#fff4dc}
+.gear .bubble[hidden]{display:none}
+@keyframes nudge{0%,100%{transform:translateX(0) rotate(0)}15%{transform:translateX(-4px) rotate(-2deg)}30%{transform:translateX(4px) rotate(2deg)}45%{transform:translateX(-3px) rotate(-1.5deg)}60%{transform:translateX(3px) rotate(1.5deg)}75%{transform:translateX(-1px)}}
+#btnAct.nudge{animation:nudge .55s ease-in-out 2}
+@media (prefers-reduced-motion:reduce){#btnAct.nudge{animation:none}}
 .gear .max{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--birch);text-transform:uppercase}
 .list{margin:6px 0;padding:0;list-style:none}
 .list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);margin:0}
@@ -339,6 +347,8 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .fc-ic svg{width:24px;height:24px}
 #where::before{display:none!important}
 #wxIc{display:inline-block;width:18px;height:18px;margin-right:6px;vertical-align:-4px}
+#clk{font-variant-numeric:tabular-nums;margin-right:7px;opacity:.95}
+#clk:empty{display:none}
 #wxIc svg{display:block;width:100%;height:100%;overflow:visible}
 /* --- Fiskelådan --- */
 .tbox{margin:8px 0 10px;border-radius:14px;padding:10px;position:relative;
@@ -413,7 +423,7 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 <div id="hud">
   <div class="chip" id="moneyChip"><span class="coin"></span><b id="money">0</b> kr</div>
   <div class="chip"><span class="hold"></span><b id="hold">0/8</b></div>
-  <div id="where" data-wx="sun"><span id="wxIc" role="img" aria-label="Sol, dag"></span><span id="whereTxt">Östersund</span></div>
+  <div id="where" data-wx="sun"><span id="wxIc" role="img" aria-label="Sol, dag"></span><span id="clk"></span><span id="whereTxt">Östersund</span></div>
 </div>
 <div id="stage">
   <div id="view">
@@ -2096,8 +2106,10 @@ const specialMap=()=>!!(M&&M.def&&(M.def.cave||M.def.river||M.def.fjall));
 function setSeason(n,quiet){
   n=((n%4)+4)%4;const was=!!S.winter;S.season=n;S.seasonT=0;S.winter=n===3;
   if(was!==S.winter){if(mode==='fish')exitFish();B.wake=[];SCHOOLMEM.length=0}
-  save();updateAction();setWhere();if(!quiet)toast(SEASONS[n].start);
+  save();updateAction();setWhere();if(!quiet){toast(SEASONS[n].start);fadeSnap(2.6)}
 }
+const FADE={c:null,a:0,d:1,lt:0};
+function fadeSnap(d){try{const c=FADE.c||(FADE.c=document.createElement('canvas'));c.width=cv.width;c.height=cv.height;c.getContext('2d').drawImage(cv,0,0);FADE.a=1;FADE.d=d||2;FADE.lt=performance.now()}catch(e){}}
 function seasonTick(dt){
   S.seasonT=(S.seasonT||0)+dt;
   if(S.seasonT>=SEASON_LEN&&mode==='sail'&&!specialMap()&&!sheetOpen&&!COMP)setSeason((S.season|0)+1);
@@ -2184,7 +2196,7 @@ const SKYK=[[0,['#f4b48c','#f8dcc0']],[.1,['#6fb2df','#cfe8f2']],[.42,['#6fb2df'
 function hexMix(a,b,k){const A=parseInt(a.slice(1),16),Bn=parseInt(b.slice(1),16);
   return 'rgb('+Math.round(lerp(A>>16,Bn>>16,k))+','+Math.round(lerp((A>>8)&255,(Bn>>8)&255,k))+','+Math.round(lerp(A&255,Bn&255,k))+')'}
 function skyCols(u){for(let i=1;i<SKYK.length;i++)if(u<=SKYK[i][0]){const a=SKYK[i-1],b=SKYK[i],k=(u-a[0])/(b[0]-a[0]);return [hexMix(a[1][0],b[1][0],k),hexMix(a[1][1],b[1][1],k)]}return [hexMix(SKYK[0][1][0],SKYK[0][1][0],0),hexMix(SKYK[0][1][1],SKYK[0][1][1],0)]}
-const nightAmt=u=>u<.04?.6-u*15:u<.5?0:u<.6?(u-.5)/.1:u<.86?1:u<.96?1-(u-.86)/.1:0;
+const nightAmt=u=>u<.07?.6*(1-u/.07):u<.5?0:u<.6?(u-.5)/.1:u<.86?1:1-.4*(u-.86)/.14;
 let cloudSpr=null;
 function buildClouds(){
   return [0,1,2].map(i=>{const w=46+i*10,h=16,c=document.createElement('canvas');c.width=Math.ceil(w*PB);c.height=Math.ceil(h*PB);const g=c.getContext('2d');g.setTransform(PB,0,0,PB,0,0);
@@ -4585,9 +4597,10 @@ function logCatch(n){
 function checkAch(){
   const out=[];
   ACH.forEach(a=>{if(!S.ach[a.id]&&a.ok(S)){S.ach[a.id]=1;S.money+=a.r;out.push(a)}});
-  if(out.length){save();updateHUD()}
+  if(out.length){save();updateHUD();achPling()}
   return out;
 }
+function achPling(){try{if(S.sfx===false)return;[[1318.5,0],[1760,.11],[2637,.22]].forEach(a=>tone(a[0],.5,'sine',.07,{delay:.35+a[1]}))}catch(e){}}
 function achToast(list){if(list.length){SND.record();toast('Prestation: '+list.map(a=>a.n).join(', ')+' (+'+kr(list.reduce((s,a)=>s+a.r,0))+')')}}
 
 /* ---------- Beställningar ---------- */
@@ -4668,9 +4681,11 @@ function buyNakten(){
 }
 let harborTab='sell';
 const HTABS=[['sell','Sälj'],['orders','Beställningar'],['rods','Spön'],['bait','Bete'],['boat','Båt'],['sonar','Ekolod'],['nak','Näkten']];
-function shopRow(name,sub,right){
+function shopRow(name,sub,right,info){
   const row=el('div','gear'),left=el('div');
-  left.appendChild(el('div','name',name));if(sub)left.appendChild(el('div','sub',sub));
+  if(info&&sub){const nm=el('div','name');nm.innerHTML=name+' ';const ib=el('button','ib','i');ib.type='button';ib.setAttribute('aria-label','Mer om '+String(name).replace(/<[^>]*>/g,''));nm.appendChild(ib);left.appendChild(nm);
+    const bb=el('div','bubble',sub);bb.hidden=true;left.appendChild(bb);ib.addEventListener('click',e=>{e.stopPropagation();bb.hidden=!bb.hidden;ib.classList.toggle('on',!bb.hidden)})}
+  else{left.appendChild(el('div','name',name));if(sub)left.appendChild(el('div','sub',sub))}
   row.appendChild(left);if(right)row.appendChild(right);return row;
 }
 function buyBtn(price,fn){const b=btn('Köp '+kr(price),'small'+(S.money>=price?' gold':''),fn);b.disabled=S.money<price;return b}
@@ -4682,7 +4697,7 @@ function tierLadder(n,cat,intro){
     if(i<=S[cat])right=el('span','max',i===S[cat]?'Har':'Klar');
     else if(i===S[cat]+1)right=buyBtn(it.p,()=>buy(cat));
     else{right=btn('Köp '+kr(it.p),'small');right.disabled=true}
-    n.appendChild(shopRow(it.n,it.d,right));
+    n.appendChild(shopRow(it.n,it.d,right,1));
   });
 }
 function harborSell(n){
@@ -4707,7 +4722,7 @@ function harborRods(n){
   n.appendChild(el('p','sub','Olika spön passar olika fisk. Du väljer spö med knappen Spö & bete när du fiskar.'));
   RODS.forEach(r=>{
     const right=S.rods[r.id]?el('span','max','Har'):buyBtn(r.p,()=>buyRod(r.id));
-    n.appendChild(shopRow(r.name,'Passar: '+r.txt,right));
+    n.appendChild(shopRow(r.name,'Passar: '+r.txt,right,1));
   });
   n.appendChild(el('h3',null,'Spöstyrka'));
   tierLadder(n,'rod','Bättre spö ger bredare fångstzon och starkare lina, oavsett typ.');
@@ -4717,7 +4732,7 @@ function harborBait(n){
   BAITS.forEach(bt=>{
     if(bt.secret)return;
     const right=S.baits[bt.id]?el('span','max','Har'):buyBtn(bt.p,()=>buyBait(bt.id));
-    n.appendChild(shopRow(bt.name,bt.d,right));
+    n.appendChild(shopRow(bt.name,bt.d,right,1));
   });
 }
 function harborNak(n){
@@ -6020,7 +6035,8 @@ function partDraw(g,t,na){
   g.globalCompositeOperation='lighter';
   for(let i=PART.list.length-1;i>=0;i--){
     const p=PART.list[i];p.age+=dt;
-    const sp=p.age>p.life||p.night!==night||p.world===fishView||PART.list.length>want+6?null:partScreen(p);
+    if(p.night!==night&&p.age<p.life-1.2)p.age=p.life-1.2;
+    const sp=p.age>p.life||p.world===fishView||PART.list.length>want+6?null:partScreen(p);
     if(!sp||sp.x<-14||sp.x>W+14||sp.y<-14||sp.y>H+14||(!p.world&&(sp.y<2||sp.y>98))){PART.list.splice(i,1);continue}
     const sw=p.night?1.6:1;
     p.vx+=(Math.sin(t*.6+p.ph)*2.2*sw+wind*14-p.vx*.6)*dt;p.vy+=(Math.cos(t*.8+p.ph*1.7)*1.6*sw-(p.night||p.world?0:.6)-p.vy*.5)*dt;
@@ -6062,7 +6078,8 @@ function post(t){
   /* varm färgton */
   g.globalAlpha=1;g.globalCompositeOperation='soft-light';
   const gr=g.createLinearGradient(0,0,0,cv.height);
-  const WN=!!S.winter;gr.addColorStop(0,na>.5?'rgba(110,140,220,.55)':WN?'rgba(255,214,170,.5)':'rgba(255,186,100,.8)');gr.addColorStop(1,na>.5?'rgba(40,60,120,.5)':WN?'rgba(120,150,210,.45)':'rgba(196,104,40,.7)');
+  const WN=!!S.winter,nk=clamp((na-.25)/.5,0,1),nm=nk*nk*(3-2*nk),mixc=(a,b)=>'rgba('+a.map((v,i)=>i<3?Math.round(v+(b[i]-v)*nm):(v+(b[i]-v)*nm).toFixed(3)).join(',')+')';
+  gr.addColorStop(0,mixc(WN?[255,214,170,.5]:[255,186,100,.8],[110,140,220,.55]));gr.addColorStop(1,mixc(WN?[120,150,210,.45]:[196,104,40,.7],[40,60,120,.5]));
   g.fillStyle=gr;g.fillRect(0,0,cv.width,cv.height);
   g.globalCompositeOperation='source-over';
   const vg=g.createRadialGradient(cv.width/2,cv.height*.56,cv.height*.22,cv.width/2,cv.height*.56,cv.height*.74);
@@ -6084,9 +6101,27 @@ function post(t){
   g.imageSmoothingEnabled=false;
   if(mode==='fish'&&F.state==='reel'&&F.reel)reelUI(g);
   if(COMP&&!COMP.ended&&mode!=='menu')compUI(g,t);
+  if(FADE.a>0&&FADE.c){const nw=performance.now();FADE.a=Math.max(0,FADE.a-(nw-FADE.lt)/1000/FADE.d);FADE.lt=nw;const e=FADE.a*FADE.a*(3-2*FADE.a);
+    g.save();g.setTransform(1,0,0,1,0,0);g.globalAlpha=e;g.drawImage(FADE.c,0,0,cv.width,cv.height);g.restore();g.setTransform(K,0,0,KY,0,0);g.globalAlpha=1}
   flushTxt();
 }
 
+/* klockan: ett dygn i spelet är sex minuter, gryningen börjar vid sex */
+let clkTxt='';
+function clockUI(){
+  const el0=$('clk');if(!el0)return;
+  const m=Math.floor(((dayU(tt)*24+6)%24)*60/10)*10,s0=mode==='menu'?'':String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  if(s0!==clkTxt){clkTxt=s0;el0.textContent=s0}
+}
+/* den röda knappen ruskar till när det dyker upp något nytt att trycka på (inte fiskeplatser) */
+const NUD={k:''};
+function nudgeCheck(){
+  let k='';
+  if(mode==='sail'&&B.tx==null&&!sheetOpen)k=nearQ||(nearYard?'yard':'')||(nearComp&&!COMP?'comp':'')||(nearCabin?'cabin':'')||(nearPortal&&!portalLock(nearPortal)?'portal:'+nearPortal.to:'');
+  if(k&&k!==NUD.k){const b=$('btnAct');if(b&&!b.disabled){b.classList.remove('nudge');void b.offsetWidth;b.classList.add('nudge');vib(30)}}
+  if(mode==='sail'&&B.tx!=null)return;
+  NUD.k=k;
+}
 /* ---------- Huvudloop ---------- */
 let last=performance.now(),whereT=0;
 function frame(now){
@@ -6106,7 +6141,7 @@ function frame(now){
   if(mode!=='cabin'&&mode!=='cave'&&!inCaveMap())wxScreen(ctx,tt);
   if(mode==='fish'&&F.land)landingDraw(tt);
   post(tt);
-  updateGear();thrUI();
+  updateGear();thrUI();clockUI();nudgeCheck();
   requestAnimationFrame(frame);
 }
 placeAt(M.dock);
