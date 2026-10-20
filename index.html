@@ -1943,12 +1943,15 @@ function pickFish(spot,u){
   let kg=f.kg[0]+(f.kg[1]-f.kg[0])*frac;
   /* Riktiga bjässar: väldigt ovanliga, lite vanligare med bra spö och på storfiskplatser */
   let giant=false;
-  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8)}
+  let monster=false;
+  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8);
+    /* ingen hård gräns: var 20:e bjässe går över den vanliga maxvikten, och för varje tiondel av maxvikten över halveras chansen */
+    if(!f.legend&&Math.random()<.05){monster=true;kg=f.max-f.max*.1*Math.log2(Math.max(1e-300,Math.random()))}}
   kg=f.beast?Math.round(kg):(kg>=1?Math.round(kg*10)/10:Math.round(kg*100)/100);
   kg=Math.max(kg,f.kg[0]);
   /* Gyllene fiskar: ungefär 1 på 250, värda fem gånger mer */
   const gold=!f.beast&&!f.legend&&(MOD.gold||Math.random()<GOLD_CHANCE);if(gold)MOD.gold=false;
-  return {f:f,kg:kg,frac:giant?1:frac,giant:giant,price:Math.round(priceFor(f,kg)*(gold?5:1)*(mastLvl(f.id)===2?1.1:1)),spot:spot.name,spotId:spot.id,gold:gold};
+  return {f:f,kg:kg,frac:giant?1:frac,giant:giant,monster:monster,price:Math.round(priceFor(f,kg)*(gold?5:1)*(mastLvl(f.id)===2?1.1:1)),spot:spot.name,spotId:spot.id,gold:gold};
 }
 const spotLocked=s=>(s.sonar||0)>S.sonar;
 const lockTxt=s=>S.sonar<1?'Behöver ekolod':'Behöver '+GEAR.sonar.items[s.sonar].n.toLowerCase();
@@ -2897,7 +2900,7 @@ function startLanding(c){
   const big=!!(c.f.beast||c.f.legend||c.gold||c.giant),isNew=!S.log[c.f.id],isRec=!!S.log[c.f.id]&&c.kg>S.log[c.f.id].best;
   const ox=S.winter?BX:112,oy=S.winter?112:WATER_Y+2;
   F.land={t:0,c:c,spr:bigFish(c.f,c.f.beast?220:150,false,c.gold),ox:ox,oy:oy,drops:[],sparks:[],sign:false,
-    lab:c.f.beast?'Storsjöodjuret!':c.f.legend?c.f.name+'!':c.gold?'Gyllene fisk!':c.giant?'En riktig bjässe!':isNew?'Ny art!':isRec?'Nytt rekord!':'',hot:big||c.giant||isNew||isRec};
+    lab:c.f.beast?'Storsjöodjuret!':c.f.legend?c.f.name+'!':c.gold?'Gyllene fisk!':c.monster?'Ett monster!':c.giant?'En riktig bjässe!':isNew?'Ny art!':isRec?'Nytt rekord!':'',hot:big||c.giant||isNew||isRec};
   for(let i=0;i<34;i++){const a=-Math.PI/2+rnd(-1.1,1.1),v=rnd(30,95);F.land.drops.push({x:ox+rnd(-4,4),y:oy,vx:Math.cos(a)*v*.7,vy:Math.sin(a)*v,r:rnd(.6,1.6)})}
   SND.splash(big);SND.whoosh();vib([40,40,80]);
 }
