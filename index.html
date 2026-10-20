@@ -997,8 +997,8 @@ const RODS=[
   fits:(f,kg)=>['abborre','mort','lake','sik','bergsimpa','blind','lykt'].indexOf(f.id)>=0||(f.id==='gadda'&&kg<=5)},
  {id:'fly',name:'Flugspö',p:1600,txt:'harr, regnbåge, nors, lax och öring upp till 3 kg',
   fits:(f,kg)=>['harr','regnbage','nors','kristall','lax'].indexOf(f.id)>=0||(f.id==='oring'&&kg<=3)},
- {id:'troll',name:'Trollingspö',p:2800,txt:'kanadaröding, röding, öring över 3 kg, gädda över 5 kg och det som kan lura i djupet. Låter dig också trolla från en motorbåt: kör sakta ute på sjön så släpar du betet efter båten',
-  fits:(f,kg)=>['kanada','roding','odjur','legend','morkeral','drake','kung'].indexOf(f.id)>=0||(f.id==='oring'&&kg>3)||(f.id==='gadda'&&kg>5)}
+ {id:'troll',name:'Trollingspö',p:2800,txt:'gädda, öring, lax, kanadaröding, röding och det som kan lura i djupet. Låter dig också trolla från en motorbåt: kör sakta ute på sjön så släpar du betet efter båten',
+  fits:(f,kg)=>['kanada','roding','odjur','legend','morkeral','drake','kung','gadda','oring','lax'].indexOf(f.id)>=0}
 ];
 const RODBY={};RODS.forEach(r=>RODBY[r.id]=r);
 const BAITS=[
@@ -2852,7 +2852,7 @@ function newTarget(r){
   r.target=clamp(t,8,BAR_H-8);r.tt=r.every*rnd(0.6,1.4);
 }
 function lineBreak(){
-  F.state='idle';holding=false;setMood('fish');toast('Linan gick av! Släpp efter när fisken ryckar.');vib(200);SND.fail();
+  if(F.reel){F.reel.tn=1.2;F.snapT=1.3;F.state='snap'}else F.state='idle';holding=false;setMood('fish');toast('Linan gick av! Släpp efter när fisken ryckar.');vib(200);SND.fail();
 }
 function reelUpdate(dt){
   const r=F.reel,fb=r.fb;r.tt-=dt;if(r.boost>0)r.boost-=dt;
@@ -3094,6 +3094,7 @@ function fishUpdate(dt,t){
   if(F.state==='casting'&&F.t>=0.6){F.state='waiting';F.t=0}
   else if(F.state==='bite'&&F.t>=F.biteWin){F.state='idle';toast('Den hann simma iväg.')}
   else if(F.state==='reel')reelUpdate(dt);
+  else if(F.state==='snap'){F.snapT-=dt;if(F.snapT<=0)F.state='idle'}
   if(F.land)landingUpdate(dt);
   knowTick(dt);
 }
@@ -3477,7 +3478,7 @@ function fishDraw(t){
 /* Fiskemätarna ritas skarpt ovanpå */
 function reelUI(g){
   const st=F.state;
-  if(st==='reel'&&F.reel){
+  if((st==='reel'||st==='snap')&&F.reel){
     const r=F.reel;
     g.fillStyle='rgba(6,20,30,.72)';rr(g,BAR_X-13,BAR_T-15,BAR_W+30,BAR_H+19,5);g.fill();
     g.strokeStyle='rgba(170,215,230,.25)';g.lineWidth=.5;g.stroke();
@@ -3489,7 +3490,8 @@ function reelUI(g){
     drawFish(g,F.pick.f,BAR_X+BAR_W/2,BAR_T+r.fy,12,true,1,F.pick.gold?'gold':undefined);
     g.fillStyle='rgba(18,52,72,.95)';rr(g,BAR_X-10,BAR_T,5,BAR_H,2.5);g.fill();
     const th=BAR_H*clamp(r.tn,0,1);
-    g.fillStyle=r.tn>.7?'#ff5a3c':r.tn>.4?'#f2c75c':'#9fd6e6';if(th>1){if(r.tn>.7){g.save();g.globalAlpha=.55+.45*Math.abs(Math.sin(clock*14));rr(g,BAR_X-11.5,BAR_T+BAR_H-th-1.5,8,th+3,4);g.fill();g.restore()}rr(g,BAR_X-10,BAR_T+BAR_H-th,5,th,2.5);g.fill()}
+    if(st==='snap'){const on=Math.sin(clock*22)>0;g.save();g.shadowColor='rgba(255,70,40,.95)';g.shadowBlur=8*K;g.fillStyle=on?'#ff3a24':'#ffd0c0';rr(g,BAR_X-11.5,BAR_T-1.5,8,BAR_H+3,4);g.fill();g.restore();}
+    else{g.fillStyle=r.tn>.7?'#ff5a3c':r.tn>.4?'#f2c75c':'#9fd6e6';if(th>1){if(r.tn>.7){g.save();g.globalAlpha=.55+.45*Math.abs(Math.sin(clock*14));rr(g,BAR_X-11.5,BAR_T+BAR_H-th-1.5,8,th+3,4);g.fill();g.restore()}rr(g,BAR_X-10,BAR_T+BAR_H-th,5,th,2.5);g.fill()}}
     g.fillStyle='rgba(18,52,72,.95)';rr(g,MET_X,BAR_T,6,BAR_H,3);g.fill();
     const ph=BAR_H*r.prog,pg=g.createLinearGradient(0,BAR_T+BAR_H-ph,0,BAR_T+BAR_H);
     const pc=r.prog>.66?['#b4ffc2','#4fb066']:r.prog>.33?['#ffe08a','#d99a2b']:['#ff8a6e','#c8301f'];pg.addColorStop(0,pc[0]);pg.addColorStop(1,pc[1]);
@@ -3751,7 +3753,7 @@ function ensureIce(){if(F.jd==null){F.jd=S.iceDepth!=null?S.iceDepth:.5;F.jigT=9
 function setDepth(y){ensureIce();F.jd=clamp((y-BAR_T)/BAR_H,0,1);S.iceDepth=F.jd}
 function winterPress(x,y){
   ensureIce();
-  if(x<MET_L+MET_W+8&&y>BAR_T-10&&y<BAR_T+BAR_H+10&&F.state!=='reel'&&F.state!=='bite'){setDepth(y);F.drag=true;holding=false;return true}
+  if(x<MET_L+MET_W+8&&y>BAR_T-10&&y<BAR_T+BAR_H+10&&F.state!=='reel'&&F.state!=='snap'&&F.state!=='bite'){setDepth(y);F.drag=true;holding=false;return true}
   if(F.state==='waiting'){jig();return true}
   return false;
 }
@@ -6193,7 +6195,7 @@ function post(t){
   }
   g.globalAlpha=1;g.globalCompositeOperation='source-over';
   g.imageSmoothingEnabled=false;
-  if(mode==='fish'&&F.state==='reel'&&F.reel)reelUI(g);
+  if(mode==='fish'&&(F.state==='reel'||F.state==='snap')&&F.reel)reelUI(g);
   if(COMP&&!COMP.ended&&mode!=='menu')compUI(g,t);
   if(FADE.a>0&&FADE.c){const nw=performance.now();FADE.a=Math.max(0,FADE.a-(nw-FADE.lt)/1000/FADE.d);FADE.lt=nw;const e=FADE.a*FADE.a*(3-2*FADE.a);
     g.save();g.setTransform(1,0,0,1,0,0);g.globalAlpha=e;g.drawImage(FADE.c,0,0,cv.width,cv.height);g.restore();g.setTransform(K,0,0,KY,0,0);g.globalAlpha=1}
