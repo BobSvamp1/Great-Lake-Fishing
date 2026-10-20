@@ -355,6 +355,25 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 #where::before{display:none!important}
 #wxIc{display:inline-block;width:18px;height:18px;margin-right:6px;vertical-align:-4px}
 #clk{font-variant-numeric:tabular-nums;margin-right:7px;opacity:.95}
+#buffIc{display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+#buffIc[hidden]{display:none}
+.story h2{text-align:center}
+.story .story-p{font-size:17px;line-height:1.55;color:#f6ead2;min-height:6.5em;margin:12px 4px}
+.story .story-note{font-family:Georgia,serif;font-style:italic;font-size:18px;line-height:1.5;color:#3a2414;background:#fff4dc;border-radius:6px;padding:14px 16px;margin:12px 4px;min-height:5em;box-shadow:0 3px 0 rgba(0,0,0,.25);transform:rotate(-1deg)}
+.recs{display:grid;gap:7px;margin:8px 0}
+.rec{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.rec.col{grid-template-columns:1fr}
+.note.col{grid-template-columns:1fr;gap:3px}
+.rec .name{font-weight:700}.rec.unk .name{opacity:.6}
+.rec-d{font-size:13.5px;color:#e8d6b4;margin-top:3px}
+.pen{padding:10px 12px;margin:8px 0;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--line)}
+.pen-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.pen-fish{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.pen-fish button{display:block;height:14px;padding:0;border:0;border-radius:7px;background:#8fb8c8;cursor:pointer;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+.pen-fish button.ad{background:#e8b84a}
+.pen-tip{font-size:12.5px;opacity:.8}
+.farm-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.farm-btns .btn{flex:1 1 auto}
 #clk:empty{display:none}
 #wxIc svg{display:block;width:100%;height:100%;overflow:visible}
 /* --- Fiskelådan --- */
@@ -448,7 +467,7 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 <div id="hud">
   <div class="chip" id="moneyChip"><span class="coin"></span><b id="money">0</b> kr</div>
   <div class="chip"><span class="hold"></span><b id="hold">0/8</b></div>
-  <div id="where" data-wx="sun"><span id="wxIc" role="img" aria-label="Sol, dag"></span><span id="clk"></span><span id="whereTxt">Östersund</span></div>
+  <div id="where" data-wx="sun"><span id="wxIc" role="img" aria-label="Sol, dag"></span><span id="buffIc" hidden role="img"><svg viewBox="0 0 16 16" width="16" height="16"><path d="M5 2c-.8 1 .8 1.6 0 2.8M8 1.6c-.8 1 .8 1.6 0 2.8M11 2c-.8 1 .8 1.6 0 2.8" stroke="#f2e6cf" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M1.5 7.2h13c0 3.4-2.9 6-6.5 6s-6.5-2.6-6.5-6z" fill="#e2702a"/><path d="M1.5 7.2h13" stroke="#ffd45a" stroke-width="1.2"/></svg></span><span id="clk"></span><span id="whereTxt">Östersund</span></div>
 </div>
 <div id="stage">
   <div id="view">
@@ -514,7 +533,7 @@ const kr=n=>Math.round(n).toLocaleString('sv-SE')+' kr';
 const SAVE='glf-hd-v1';
 const defaultS=()=>({money:0,rod:0,boat:0,sonar:0,hold:[],log:{},top:[],catches:0,seen:{},nakten:0,music:true,sfx:true,played:0,
   rods:{spinn:1,fly:0,troll:0},rodSel:'spinn',lines:{nylon:1},lineSel:'nylon',tafs:0,tafsOn:0,baits:{mask:1,fluga:0,wobbler:0,skedd:0},baitSel:'mask',
-  orders:[],ordersDone:0,medals:{},ach:{},stats:{earned:0,night:0},golden:{},treasures:0,maps:{},cabin:0,trophies:[],comp:{best:{},wins:0,hardWin:0},boats:[1,0,0,0,0],sleds:[1,0,0],sled:0,bc:[],sc:[]});
+  orders:[],ordersDone:0,medals:{},ach:{},stats:{earned:0,night:0},golden:{},treasures:0,maps:{},cabin:1,trophies:[],comp:{best:{},wins:0,hardWin:0},boats:[1,0,0,0,0],sleds:[1,0,0],sled:0,bc:[],sc:[]});
 let S=defaultS();
 /* Sparfilen ligger kvar i webbläsaren när spelet uppdateras. Nyckeln får aldrig bytas.
    Nya fält får standardvärden vid inläsning, och en trasig sparfil skrivs aldrig över. */
@@ -1116,8 +1135,9 @@ function vcust(kind,i){
 }
 const upL=(kind,i,id)=>(vcust(kind,i).up[id])|0;
 function vehSpd(){
-  if(S.winter)return SLEDS[S.sled].spd*(1+.08*upL('sled',S.sled,'motor'));
-  return GEAR.boat.items[S.boat].spd*(1+.08*upL('boat',S.boat,'motor'));
+  const bv=typeof buffV==='function'?buffV('speed'):1;
+  if(S.winter)return SLEDS[S.sled].spd*(1+.08*upL('sled',S.sled,'motor'))*bv;
+  return GEAR.boat.items[S.boat].spd*(1+.08*upL('boat',S.boat,'motor'))*bv;
 }
 const cap=()=>S.winter?SLEDS[S.sled].cap+pkCap(S.sled,upL('sled',S.sled,'pulka')):Math.round(GEAR.boat.items[S.boat].cap*(1+.25*upL('boat',S.boat,'cool')));
 let PREVC=null,SHOWROOM=false;const LAMPQ=[];
@@ -1960,13 +1980,13 @@ function pickFish(spot,u){
   /* Riktiga bjässar: väldigt ovanliga, lite vanligare med bra spö och på storfiskplatser */
   let giant=false;
   let monster=false;
-  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8);
+  if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)*buffV('giant')){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8);
     /* ingen hård gräns: var 20:e bjässe går över den vanliga maxvikten, och för varje tiondel av maxvikten över halveras chansen */
     if(!f.legend&&Math.random()<.05){monster=true;kg=f.max-f.max*.1*Math.log2(Math.max(1e-300,Math.random()))}}
   kg=f.beast?Math.round(kg):(kg>=1?Math.round(kg*10)/10:Math.round(kg*100)/100);
   kg=Math.max(kg,f.kg[0]);
   /* Gyllene fiskar: ungefär 1 på 250, värda fem gånger mer */
-  const gold=!f.beast&&!f.legend&&(MOD.gold||Math.random()<GOLD_CHANCE);if(gold)MOD.gold=false;
+  const gold=!f.beast&&!f.legend&&(MOD.gold||Math.random()<GOLD_CHANCE*buffV('gold'));if(gold)MOD.gold=false;
   return {f:f,kg:kg,frac:giant?1:frac,giant:giant,monster:monster,price:Math.round(priceFor(f,kg)*(gold?5:1)*(mastLvl(f.id)===2?1.1:1)),spot:spot.name,spotId:spot.id,gold:gold};
 }
 const spotLocked=s=>(s.sonar||0)>S.sonar;
@@ -2547,7 +2567,7 @@ function sailDraw(t){
   if(M.id==='stor'){dyn.push({y:BRIDGE.y+BRIDGE.w+14,fn:()=>drawBridge(g,t,WIN,na)});const fb=footBridge();dyn.push({y:fb.y+fb.w+14,fn:()=>drawFootBridge(g,t,WIN,na)})}
   if(M.cabin&&S.cabin)cabinSmoke(dyn,g,t);
   if(TR.obj){const o=TR.obj;dyn.push({y:o.y,fn:()=>{const p=proj(o.x,o.y);if(p&&p.x>-20&&p.x<W+20&&p.y<H+20)drawTreasure(g,p.x,p.y,p.s,o,t,WIN)}})}
-  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);boardDyn(dyn,g,t,WIN);
+  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);boardDyn(dyn,g,t,WIN);farmDyn(dyn,g,t,WIN);
   if(M.chest)dyn.push({y:M.chest.ly,fn:()=>{const p=proj(M.chest.lx,M.chest.ly);if(p)drawChestMap(g,p.x,p.y,p.s,t,QS().st>=4)}});
   dyn.sort((a,b)=>a.y-b.y);let di=0;
   const r0=Math.max(0,Math.floor((V.camY-DBILL*(V.D||D0)/D0+PAD)/2)),r1=Math.floor((V.camY-6+PAD)/2);
@@ -2841,7 +2861,7 @@ function updateSchool(dt){
     s.x+=s.vx*dt*(lure?1-.4*nb:1);s.y+=Math.sin(clock*1.3+s.ph)*5*dt;
     if(!hunting)continue;
     if(fav&&Math.abs(dx)<rg&&Math.abs(dy)<(nb?rg:44))s.y+=clamp(dy,-1,1)*Math.min(Math.abs(dy),(14+12*nb)*dt);
-    if(Math.abs(dx)<(S.sonar<1?30:22)&&Math.abs(s.y-F.dy)<(S.sonar<1?24:16))s.int+=dt*(fav?1+.4*nb:0.25)*shyMul(s.p.f.id);
+    if(Math.abs(dx)<(S.sonar<1?30:22)&&Math.abs(s.y-F.dy)<(S.sonar<1?24:16))s.int+=dt*(fav?1+.4*nb:0.25)*shyMul(s.p.f.id)*buffBite();
     else s.int=Math.max(0,s.int-dt*0.5);
     if(!biter&&s.int>=1.4)biter=s;
   }
@@ -2856,7 +2876,7 @@ function startReel(){
   const p=F.pick,d=0.3+0.7*p.frac,hard=clamp(p.f.pk/200,0,1),fb=FIGHT[p.f.id]||FIGHT.abborre;
   /* på isen pimplar man med pimpelspö, så där blir det aldrig fel spö */
   const fit=S.winter||RODBY[S.rodSel].fits(p.f,p.kg);
-  const nb=newbie(),zh=BAR_H*GEAR.rod.items[S.rod].bar/100*(p.f.beast?0.8:p.f.id==='drake'?0.7:p.f.legend?0.85:1)*(1+.06*mastLvl(p.f.id))*(fit?1.1:0.7)*(1+.3*nb);
+  const nb=newbie(),zh=BAR_H*GEAR.rod.items[S.rod].bar/100*(p.f.beast?0.8:p.f.id==='drake'?0.7:p.f.legend?0.85:1)*(1+.06*mastLvl(p.f.id))*(fit?1.1:0.7)*(1+.3*nb)*buffV('zone');
   F.reel={fy:BAR_H*0.5,target:BAR_H*0.5,tt:0,hy:BAR_H-zh/2,hv:0,zh:zh,prog:0.3,tick:0,in:false,
     fb:fb,fit:fit,d:d,line:(1+(curLine().kg-3)/10)*(1+.4*nb),lkg:curLine().kg,kgT:(p.f.beast||p.f.legend)?9:p.kg,nb:nb,teeth:TEETH.indexOf(p.f.id)>=0&&!S.tafsOn,cr:0,el:0,pull:clamp(((p.f.beast||p.f.legend)?14:p.kg)/(GEAR.rod.items[S.rod].kg||2)-1,0,1.6)*(1-.6*nb),boost:0,bt:rnd(2,3.5),bw:0,bd:0,tn:0,
     speed:(p.f.beast?150:36+62*(0.5*d+0.5*hard))*fb.sp*wxReelMul()*(1-.3*nb),every:Math.max(0.3,(1.0-0.55*d)*fb.ev)};
@@ -2889,7 +2909,7 @@ function reelUpdate(dt){
   r.fy+=Math.sign(r.target-r.fy)*Math.min(Math.abs(r.target-r.fy),sp*dt);
   if(holding)r.hv-=620*dt;else r.hv+=420*dt;
   /* tung fisk på för klent spö drar ner zonen */
-  r.hv+=300*r.pull*dt;
+  r.hv+=300*r.pull*buffV('pull')*dt;
   r.hv=clamp(r.hv,-170,190);r.hy+=r.hv*dt;
   const lo=r.zh/2,hi=BAR_H-r.zh/2;
   if(r.hy<lo){r.hy=lo;r.hv=Math.abs(r.hv)*0.25}
@@ -2899,7 +2919,7 @@ function reelUpdate(dt){
   const below=r.fy>r.hy+r.zh/2-1,wf=Math.pow(Math.max(1,r.kgT/r.lkg),.8);
   /* under ett ryck spänns linan så fort man håller in, var fisken än är */
   r.strain=holding&&(below||burst);
-  if(r.strain)r.tn+=(burst?(1.0+0.6*r.d)*(fb.bp>1?1.2:1)*(below?1.3:1):(0.55+0.6*r.d))*wf*(1-.5*r.nb)/r.line*dt;
+  if(r.strain)r.tn+=(burst?(1.0+0.6*r.d)*(fb.bp>1?1.2:1)*(below?1.3:1):(0.55+0.6*r.d))*wf*(1-.5*r.nb)/r.line*buffV('tension')*dt;
   else r.tn-=(holding?0.25:0.6)*dt;
   r.tn=clamp(r.tn,0,1.2);
   if(r.tn>=1){lineBreak();return}
@@ -3802,7 +3822,7 @@ function jig(){
     const dd=Math.abs(s.d-F.jd),dist=Math.hypot(s.x-BX,s.y-HOOK_Y);
     if(dd<.16&&dist<70){
       if(q<0){s.int=Math.max(0,s.int-.4);if(dist<30){s.vx=(s.x<BX?-1:1)*Math.max(18,Math.abs(s.vx)*1.5);s.flee=1.2}}
-      else s.int+=.28*q*shyMul(s.p.f.id);
+      else s.int+=.28*q*shyMul(s.p.f.id)*buffBite();
     }
   }
 }
@@ -3827,7 +3847,7 @@ function updateSchoolWinter(dt){
       s.att=Math.max(0,(s.att||0)-dt);
       s.x+=s.vx*dt*(1-.8*(s.att||0));s.y+=Math.sin(clock*1.3+s.ph)*5*dt;
     }
-    if(hunting&&dd<.11+.09*nb&&dist<16)s.int+=dt*(fav?.22:.07)*(F.boost>0?1.6:.7)*(1+nb*2)*shyMul(s.p.f.id);
+    if(hunting&&dd<.11+.09*nb&&dist<16)s.int+=dt*(fav?.22:.07)*(F.boost>0?1.6:.7)*(1+nb*2)*shyMul(s.p.f.id)*buffBite();
     else s.int=Math.max(0,s.int-dt*.35);
     if(hunting&&!biter&&s.int>=1.55)biter=s;
   }
@@ -3976,7 +3996,7 @@ function compDyn(dyn,g,t,WIN,sq){
 
 /* ---------- Stugan ---------- */
 const CABIN_PRICE=8000,MAX_TROPHIES=14;
-const WALL={x0:49,x1:176,y0:48,y1:198};
+const WALL={x0:49,x1:176,y0:48,y1:180};
 let CAB={place:null,drag:null,sel:-1,moved:false};
 function showCabinSale(){
   const n=el('div');n.appendChild(el('h2',null,'Stuga till salu'));
@@ -3989,8 +4009,8 @@ function showCabinSale(){
   openSheet(n);
 }
 function enterCabin(){mode='cabin';B.tx=null;B.path=[];auMove(0,S.boat);setMood('fish');CAB={place:null,drag:null,sel:-1,moved:false};updateAction();setWhere();
-  if(!(S.trophies||[]).length)toast('Tryck på Häng upp för att sätta upp en fisk på väggen.')}
-function exitCabin(){mode='sail';CAB.place=null;setMood('sail');updateAction();setWhere()}
+}
+function exitCabin(){mode='sail';CAB.place=null;setMood('sail');updateAction();setWhere();if(!S.cabinTips){S.cabinTips=1;save();setTimeout(cabinTips,350)}}
 /* Mount candidates: hold + finest catches not already hung */
 const trophyKey=t=>t.id+'|'+t.kg+'|'+t.spot;
 function mountCandidates(){
@@ -4023,9 +4043,11 @@ function placeTrophy(p){
 }
 function trophyAt(p){const T2=S.trophies||[];for(let i=T2.length-1;i>=0;i--){const t=T2[i],w=plaqueW(t);if(Math.abs(p.x-t.x)<w/2+2&&Math.abs(p.y-t.y)<plaqueH(t)/2+2)return i}return -1}
 function cabinPress(p){
+  if(!CAB.place&&stovePress(p))return;
   if(!CAB.place&&p.x>AQ.x-4&&p.x<AQ.x+AQ.w+4&&p.y>AQ.y-3&&p.y<AQ.y+AQ.h+22){showAquarium();return}
   if(CAB.place){if(p.y>WALL.y0&&p.y<WALL.y1){placeTrophy(p)}else toast('Tryck på väggen');return}
   const i=trophyAt(p);if(i>=0){CAB.drag={i:i,dx:p.x-S.trophies[i].x,dy:p.y-S.trophies[i].y,sx:p.x,sy:p.y};CAB.moved=false;CAB.sel=i}
+  else if(p.x>WALL.x0&&p.x<WALL.x1&&p.y>WALL.y0&&p.y<WALL.y1)showMountPicker();
 }
 function cabinMove(p){
   const d=CAB.drag;if(!d)return;
@@ -4304,9 +4326,8 @@ function cabinDraw(t){
 
   /* troféer */
   (S.trophies||[]).forEach((tr,i)=>{const w=plaqueW(tr),h=plaqueH(tr);tr.x=clamp(tr.x,WALL.x0+w/2,WALL.x1-w/2);tr.y=clamp(tr.y,WALL.y0+h/2,WALL.y1-h/2);drawPlaque(g,t,tr,i===CAB.sel&&CAB.drag&&CAB.moved)});
-  g.drawImage(cabinFG2(),0,0,W,H);drawAquarium(g,t);const fl=drawFireplace(g,t);drawLantern(g,t);
+  g.drawImage(cabinFG2(),0,0,W,H);drawAquarium(g,t);const fl=drawFireplace(g,t);drawWoodStove(g,t);drawLantern(g,t);
   drawHearthCat(g,t);
-  if(!(S.trophies||[]).length){txt('Väggarna är tomma',120,104,{size:8,col:'#ffe8c0'});txt('Tryck på Häng upp',120,115,{size:7,col:'#f3e0c0'})}
   if(CAB.place){g.fillStyle='rgba(255,224,138,.12)';g.fillRect(WALL.x0,WALL.y0,WALL.x1-WALL.x0,WALL.y1-WALL.y0);txt('Tryck där fisken ska hänga',W/2,WALL.y0-12+20,{size:7.5,col:'#ffe08a'})}
   /* eldsken och värme */
   g.save();g.globalCompositeOperation='lighter';
@@ -4367,6 +4388,7 @@ function setWhere(){
   else if(nearPortal)p=nearPortal.name;
   else if(nearQ&&nearQ.indexOf('npc:')===0)p=LOOK[nearQ.slice(4)].name;
   else if(nearQ==='board')p='Topplistan';
+  else if(nearQ==='farm')p='Fiskodlingen';
   else if(nearQ)p=nearQ==='nils'?'Gamle Nils':nearQ==='stone'?'Runstenen':nearQ==='chest'?'Gädd-Gurras kista':'Gädd-Gurras grotta';
   else if(ZN.cur)p=ZN.cur.name;
   if(mode==='cabin')p='Stugan';
@@ -4380,6 +4402,7 @@ function updateAction(){
   if(mode==='cave'){b.textContent='Ro ut ur grottan';b.disabled=false;return}
   if(TRL.bite){b.textContent='Dra in!';b.disabled=false;return}
   if(nearQ==='board'){b.textContent='Se topplistan';b.disabled=false;return}
+  if(nearQ==='farm'){b.textContent='Fiskodlingen';b.disabled=false;return}
   if(nearQ&&nearQ.indexOf('npc:')===0){b.textContent='Prata med '+LOOK[nearQ.slice(4)].name.split(' ')[0];b.disabled=false;return}
   if(nearQ){b.textContent=nearQ==='nils'?'Prata med Nils':nearQ==='stone'?'Undersök stenen':nearQ==='chest'?'Öppna kistan':'Ro in i grottan';b.disabled=false;return}
   if(nearSpot){
@@ -4392,19 +4415,21 @@ function updateAction(){
   else if(nearYard){b.textContent='Gå in på varvet';b.disabled=false}
   else if(nearDock){b.textContent=M.def.back?'Till '+MAPS[M.def.back.map].name:M.id==='nak'?'Till Storsjön':M.id==='grotta'?'Ro ut ur grottan':'Gå i hamn';b.disabled=false}
   else if(nearComp){b.textContent=COMP?'Tävling pågår':'Tävling';b.disabled=!!COMP}
-  else if(nearCabin){b.textContent=S.cabin?'Gå in i stugan':'Stuga till salu';b.disabled=false}
+  else if(nearCabin){b.textContent='Gå in i stugan';b.disabled=false}
   else{b.textContent='Tryck på sjön';b.disabled=true}
 }
 function openSheet(node,lock){
-  const box=$('sheetIn');box.innerHTML='';lockSheet=!!lock;
+  const box=$('sheetIn');box.innerHTML='';lockSheet=!!lock;stickySheet=false;
   if(!lock){const x=document.createElement('button');x.className='x';x.type='button';x.textContent='X';x.setAttribute('aria-label','Stäng');x.addEventListener('click',closeSheet);box.appendChild(x)}
   box.appendChild(node);
   $('sheet').hidden=false;sheetOpen=true;holding=false;box.scrollTop=0;
 }
-function closeSheet(){$('sheet').hidden=true;sheetOpen=false;lockSheet=false}
-$('sheet').addEventListener('pointerdown',e=>{if(e.target===$('sheet')&&!lockSheet)closeSheet()});
+function closeSheet(){$('sheet').hidden=true;sheetOpen=false;lockSheet=false;stickySheet=false}
+let stickySheet=false;
+$('sheet').addEventListener('pointerdown',e=>{if(e.target===$('sheet')&&!lockSheet&&!stickySheet)closeSheet()});
 function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
 function btn(label,cls,fn){const b=el('button','btn '+(cls||''),label);b.type='button';if(fn)b.addEventListener('click',fn);return b}
+/* alla arter utom legenderna räknas, även de man inte hittat än */
 const allSp=()=>FISH.filter(f=>!f.beast&&!f.legend);
 const speciesCount=()=>allSp().filter(f=>S.log[f.id]).length;
 const visFish=()=>FISH.filter(f=>!f.cave||S.log[f.id]);
@@ -4795,7 +4820,7 @@ function deliverOrder(o){
 }
 
 function sellAll(){
-  const sum=S.hold.reduce((a,b)=>a+b.price,0);
+  const sum=Math.round(S.hold.reduce((a,b)=>a+b.price,0)*buffV('price'));
   if(!S.hold.length)return;
   S.money+=sum;S.stats.earned+=sum;S.hold=[];const ach=checkAch();save();updateHUD();SND.coin();showHarbor();toast('Sålde fångsten för '+kr(sum));if(ach.length)setTimeout(()=>achToast(ach),1800);
 }
@@ -4882,6 +4907,11 @@ function harborLine(n){
 }
 function buyLine(id){const l=LINEBY[id];if(S.lines[id]||S.money<l.p)return;S.money-=l.p;S.lines[id]=1;S.lineSel=id;save();updateHUD();SND.buy();showHarbor();toast('Köpte '+l.name)}
 function buyTafs(){if(S.tafs||S.money<TAFS.p)return;S.money-=TAFS.p;S.tafs=1;S.tafsOn=1;save();updateHUD();SND.buy();showHarbor();toast('Köpte ståltafs. Den sitter på nu, du kan ta av den i Fiskelådan.')}
+function harborVed(n){
+  n.appendChild(el('p','sub','Ved till vedspisen i stugan. Du har <b>'+(S.ved|0)+'</b> av '+VED_MAX+' vedträn i korgen.'));
+  VED_PACKS.forEach(v=>{const full=(S.ved|0)+v.c>VED_MAX,b=buyBtn(v.p,()=>{if(S.money<v.p||(S.ved|0)+v.c>VED_MAX)return;S.money-=v.p;S.ved=(S.ved|0)+v.c;save();updateHUD();SND.buy();showHarbor();toast('Köpte '+v.n.toLowerCase()+'. Veden ligger i korgen i stugan.')});
+    if(full){b.disabled=true;b.textContent='Korgen är full'}n.appendChild(shopRow(v.n+' · '+v.c+' st',v.d,b,1))});
+}
 function harborNak(n){
   if(S.nakten){
     const right=M.id==='nak'?btn('Till Storsjön','small gold',()=>{closeSheet();SND.ramp();switchMap('stor','ramp');updateAction();setWhere();toast('Tillbaka på Storsjön')}):null;
@@ -4894,7 +4924,7 @@ function harborNak(n){
 }
 const SHOPS={
   fish:{name:'Fiskhandlaren',sub:'Sälj din fångst',greet:'Färsk fisk köpes! Stora fiskar och beställningar betalar bäst.',tabs:[['sell','Sälj fångst'],['orders','Beställningar']]},
-  sport:{name:'Sport & Fiske',sub:'Fiskeutrustning',greet:'Spön, bete och ekolod. Båtar och skotrar finns på Varvet längre söderut.',tabs:[['sonar','Ekolod'],['rods','Spön'],['bait','Bete'],['line','Linor'],['nak','Båtsläp']]}
+  sport:{name:'Sport & Fiske',sub:'Fiskeutrustning',greet:'Spön, bete, ekolod och ved. Båtar och skotrar finns på Varvet längre söderut.',tabs:[['sonar','Ekolod'],['rods','Spön'],['bait','Bete'],['line','Linor'],['ved','Ved'],['nak','Båtsläp']]}
 };
 const shopOf=tab=>SHOPS.fish.tabs.some(t=>t[0]===tab)?'fish':'sport';
 let lastTab={fish:'sell',sport:'sonar'};
@@ -5054,6 +5084,7 @@ function showHarbor(tab){
   else if(k==='rods')harborRods(n);
   else if(k==='bait')harborBait(n);
   else if(k==='line')harborLine(n);
+  else if(k==='ved')harborVed(n);
   else if(k==='boat')tierLadder(n,'boat','Snabbare båt och större lastrum.');
   else if(k==='sonar')tierLadder(n,'sonar','Ekolod visar fiskarna under båten. Djupa platser kräver ekolod.');
   else if(k==='maps')harborDepth(n);
@@ -5435,6 +5466,7 @@ const caveOpen=()=>QS().st>=2&&nightAmt(dayU(tt))>.45;
 function qNear(){
   {const np=npcNear();if(np)return 'npc:'+np}
   if(boardNear())return 'board';
+  if(farmNear())return 'farm';
   if(M.id==='grotta'){if(!M.chest||B.tx!=null||QS().st>=4)return null;return Math.hypot(M.chest.x-B.x,M.chest.y-B.y)<30?'chest':null}
   const qp=qPos();if(!qp||B.tx!=null)return null;const st=QS().st;
   const d=k=>Math.hypot(qp[k].x-B.x,qp[k].y-B.y);
@@ -5550,6 +5582,7 @@ function qInteract(){
   }
   if(nearQ&&nearQ.indexOf('npc:')===0){npcTalk(nearQ.slice(4));return}
   if(nearQ==='board'){showBoard();return}
+  if(nearQ==='farm'){showFarm();return}
   if(nearQ==='cave')enterCaveMap();
   if(nearQ==='chest')openChest();
 }
@@ -5768,7 +5801,6 @@ function drawAquarium(g,t){
     drawFish(g,f,x,y,f.beast?18:10,!dir,1,aq[id].gold?'gold':undefined)});
   g.fillStyle='rgba(255,255,255,.18)';g.fillRect(AQ.x+2,AQ.y+2,3,AQ.h-6);
   g.strokeStyle='#2a1a0e';g.lineWidth=1.2;g.strokeRect(AQ.x,AQ.y,AQ.w,AQ.h);g.fillStyle='#2a1a0e';g.fillRect(AQ.x-1,AQ.y-2,AQ.w+2,2.5);
-  if(!ids.length)txt('Akvariet',AQ.x+AQ.w/2,AQ.y+AQ.h/2+1,{size:6,col:'#e8f4f8'});
 }
 function showAquarium(){
   const aq=S.aq||{},ids=Object.keys(aq);const n=el('div');n.appendChild(el('h2',null,'Akvariet'));
@@ -5781,7 +5813,7 @@ let gearShown=null;
 /* på isen kan man byta när som helst utom när fisken nappar eller drillas */
 function gearOk(){if(F.land)return false;if(S.winter)return ['reel','bite','snap','done'].indexOf(F.state)<0;return F.state==='idle'||F.state==='waiting'}
 function updateGear(){
-  const show=(mode==='fish'&&gearOk())||mode==='cabin';
+  const show=mode==='fish'&&gearOk();
   const key=show+mode;if(key===gearShown)return;gearShown=key;
   $('btnGear').hidden=!show;$('bar').classList.toggle('g',show);
   $('btnGear').textContent=mode==='cabin'?'Häng upp':'Fiskelådan';
@@ -5811,7 +5843,7 @@ function startGame(){
   auInit();
   $('menu').hidden=true;document.body.classList.remove('inmenu');
   mode='sail';setMood('sail');updateHUD();updateAction();setWhere();fit();setTimeout(lakeTitle,350);
-  if(!S.played){S.played=1;save()}
+  if(!S.played){S.played=1;S.cabinStory=0;save();if(M.cabin){placeAt(M.cabin);window.__intro=1;enterCabin();window.__intro=0}setTimeout(()=>introStory(()=>toast('Klicka på Gå ut när du är redo att börja fiska.')),500)}
   if(S.depthRefundMsg){const r2=S.depthRefundMsg;S.depthRefundMsg=0;save();setTimeout(()=>toast('Djupkorten finns inte längre, ekolodet visar djupet nu. Du fick tillbaka '+kr(r2)+'.'),1600)}
   if(S.mapRefundMsg){const r=S.mapRefundMsg;S.mapRefundMsg=0;save();setTimeout(()=>toast('Fiskekartorna finns inte längre. Du fick tillbaka '+kr(r)+'.'),800)}
 }
@@ -6027,6 +6059,341 @@ function showBoard(){
 $('mAcct').addEventListener('click',()=>{auInit();showAcctSheet()});
 cloudInit();
 
+/* ---------- Hemmet: morfars stuga, vedspisen och fiskodlingen ---------- */
+const dayIdx=()=>Math.floor((tt+0.1*DAY)/DAY);
+/* --- Berättelsen i början --- */
+const INTRO=[
+ 'Varje sommar när skolan slutade packade mamma bilen och körde dig hela vägen från Göteborg upp till morfar Erik i Jämtland.',
+ 'Hemma i stan var det spårvagnar, trafik och asfalt. Hos morfar var det tyst, ljusa nätter och en sjö som aldrig tog slut. "Min lilla stadsråtta", brukade han kalla dig.',
+ 'Morfar lärde dig att sätta mask på kroken, rensa abborre på bryggan och lyssna efter odjuret i dimman. Han skrattade alltid när du blev rädd.',
+ 'I våras kom ett brev från Östersund. Morfar har gått bort, och han har lämnat sin gamla timmerstuga vid Storsjön till dig.',
+ 'Så nu har du lämnat stan, packat bilen och kört norrut. Stugan är sliten men varm, och nere vid bryggan ligger morfars gamla roddbåt.',
+ 'På köksbordet ligger hans träspö och en lapp med sned handstil:',
+ '"Sjön ger till den som har tålamod. Börja med masken, sälj fångsten i hamnen och glöm inte att elda i spisen. Kram, morfar."'];
+function introStory(done){
+  let i=0;
+  const show=()=>{const n=el('div','story');
+    n.appendChild(el('h2',null,'Morfars stuga'));
+    n.appendChild(el('p',i===INTRO.length-1?'story-note':'story-p',INTRO[i]));
+    const dots=el('div','hdots');INTRO.forEach((_,k)=>dots.appendChild(el('span','hdot'+(k===i?' on':''))));n.appendChild(dots);
+    const row=el('div','actions');
+    if(i<INTRO.length-1)row.appendChild(btn('Fortsätt','main',()=>{i++;show()}));
+    else row.appendChild(btn('Börja','main',()=>{closeSheet();if(done)done()}));
+    n.appendChild(row);openSheet(n,true)};
+  show();
+}
+/* alla börjar med morfars stuga */
+if(!S.cabin){S.cabin=1;S.trophies=S.trophies||[];S.cabinStory=1}
+
+/* --- Vedspisen --- */
+const SMALLF=['mort','nors','bergsimpa','blind'];
+const RECIPES=[
+ {id:'abb',n:'Stekt abborre',need:['abborre'],buff:'bite',v:1.25,d:'Fisken nappar oftare.'},
+ {id:'gad',n:'Gäddfärsbullar',need:['gadda'],buff:'pull',v:.5,d:'Starka armar: tung fisk drar bara ner zonen hälften så mycket.'},
+ {id:'rod',n:'Smörstekt röding',need:['roding','kanada'],buff:'tension',v:.7,d:'Lugn hand: linan spänns långsammare.'},
+ {id:'ori',n:'Ugnsbakad öring',need:['oring'],buff:'zone',v:1.12,d:'Bredare fångstzon.'},
+ {id:'har',n:'Harr i folie',need:['harr'],buff:'speed',v:1.15,d:'Båten och skotern går 15 % fortare.'},
+ {id:'lak',n:'Lakesoppa',need:['lake'],buff:'night',v:1.35,d:'Varm i kroppen: fisken nappar mycket oftare på natten och på isen.'},
+ {id:'sik',n:'Sikrom på knäckebröd',need:['sik'],buff:'gold',v:2,d:'Dubbelt så stor chans till gyllene fisk.'},
+ {id:'lax',n:'Gravad lax',need:['lax'],buff:'giant',v:2,d:'Dubbelt så stor chans till bjässar.'},
+ {id:'smf',n:'Småfiskbullar',small:3,buff:'zone',v:1.06,d:'Lite bredare fångstzon. Görs av tre småfiskar: mört, nors eller bergsimpa.'},
+ {id:'gry',n:'Fiskgryta',mix:3,buff:'price',v:1.15,d:'Fiskhandlaren betalar 15 % mer för fisken. Görs av tre fiskar av minst två olika arter.'}];
+const RECBY={};RECIPES.forEach(r=>RECBY[r.id]=r);
+const VED_MAX=24;
+const VED_PACKS=[{n:'Vedsäck',c:3,p:90,d:'Tre vedträn. Räcker till en vanlig rätt eller en av de starkare rätterna.'},{n:'Vedkasse',c:12,p:300,d:'Tolv vedträn, billigare per styck. Räcker till ungefär fem rätter.'}];
+function buffOn(){const b=S.buff;return b&&RECBY[b.id]&&tt<b.until?b:null}
+function buffV(kind){const b=buffOn();if(!b)return 1;const r=RECBY[b.id];if(r.buff!==kind)return 1;return r.v}
+function buffBite(){return buffV('bite')*((S.winter||nightAmt(dayU(tt))>.5)?buffV('night'):1)}
+function recKnown(r){if(r.mix)return true;if(r.small)return SMALLF.some(id=>S.log[id]);return r.need.some(id=>S.log[id])}
+/* vilka fiskar ur lastrummet som går åt: alltid de billigaste som passar */
+function recPick(r){
+  const H=S.hold.map((h,i)=>({h:h,i:i})).sort((a,b)=>a.h.price-b.h.price);
+  if(r.small){const L=H.filter(o=>SMALLF.indexOf(o.h.id)>=0).slice(0,r.small);return L.length>=r.small?L:null}
+  if(r.mix){const L=H.filter(o=>!FBY[o.h.id].legend&&!FBY[o.h.id].beast);const pick=L.slice(0,r.mix);
+    if(pick.length<r.mix)return null;if(new Set(pick.map(o=>o.h.id)).size<2){const other=L.find(o=>o.h.id!==pick[0].h.id);if(!other)return null;pick[pick.length-1]=other}return pick}
+  const o=H.find(o=>r.need.indexOf(o.h.id)>=0);return o?[o]:null;
+}
+const CK={t:0,id:null};
+function cookDish(r){
+  const cost=recWood(r);if((S.ved|0)<cost){toast('Du behöver '+cost+' vedträn till '+r.n.toLowerCase()+'. Köp ved i Sport & Fiske i hamnen.');return}
+  const L=recPick(r);if(!L){toast('Du har inte rätt fisk i lastrummet.');return}
+  L.map(o=>o.i).sort((a,b)=>b-a).forEach(i=>S.hold.splice(i,1));
+  S.ved-=cost;S.buff={id:r.id,until:tt+DAY};S.cooked=(S.cooked||0)+1;
+  CK.t=3.2;CK.id=r.id;save();updateHUD();buffUI();closeSheet();
+  try{if(S.sfx!==false){tone(220,.5,'triangle',.03);tone(330,.4,'sine',.02,{delay:.2})}}catch(e){}
+  setTimeout(()=>toast(r.n+' är klar. '+r.d+' Det varar ett dygn.'),1600);
+}
+function takeWood(){toast((S.ved|0)?'Du har '+S.ved+' vedträn i korgen. Köp mer ved i Sport & Fiske i hamnen.':'Vedkorgen är tom. Köp ved i Sport & Fiske i hamnen.')}
+const FIRE_WOOD=3;
+const fireOn=()=>true;
+/* vanliga rätter kostar två vedträn, de starkaste tre */
+const recWood=r=>(r.buff==='giant'||r.buff==='gold'||r.buff==='price')?3:2;
+function lightStove(){
+  if(fireOn()){toast('Spisen brinner redan.');return}
+  if((S.ved|0)<FIRE_WOOD){toast('Du behöver '+FIRE_WOOD+' vedträn för att tända spisen. Köp ved i Sport & Fiske i hamnen.');return}
+  S.ved-=FIRE_WOOD;S.fire=tt+DAY;save();try{if(S.sfx!==false){tone(120,.6,'sawtooth',.02);tone(90,.8,'triangle',.03,{delay:.1})}}catch(e){}
+  toast('Det sprakar i spisen. Elden brinner ett dygn.');showStove();
+}
+function showStove(){
+  const n=el('div','stove');
+  n.appendChild(el('h2',null,'Vedspisen'));
+  const b=buffOn();
+  const lit=true;
+  n.appendChild(el('p','sub','Ved: <b>'+(S.ved|0)+'</b> av '+VED_MAX+' vedträn. Varje rätt kostar ved, och fisken tas ur lastrummet.'+((S.ved|0)<2?' Köp ved i Sport & Fiske i hamnen.':'')));
+  if(b){const left=Math.max(0,b.until-tt)/DAY*24;n.appendChild(el('p','greet','Du har ätit <b>'+RECBY[b.id].n.toLowerCase()+'</b>. '+RECBY[b.id].d+' Ungefär '+Math.max(1,Math.round(left))+' timmar kvar.'))}
+  else n.appendChild(el('p','greet','Laga något gott av fångsten. Maten håller dig igång ett helt dygn, men du kan bara ha en maträtt i magen åt gången.'));
+  const list=el('div','recs');
+  RECIPES.forEach(r=>{
+    const known=recKnown(r),pick=known?recPick(r):null,row=el('div','rec'+(known?'':' unk'));
+    const left=el('div');left.appendChild(el('div','name',known?r.n:'???'));
+    left.appendChild(el('div','sub',known?(r.small?'3 småfiskar':r.mix?'3 fiskar, minst 2 arter':r.need.map(id=>FBY[id].name).join(' eller ')):'Fånga rätt fisk för att lära dig receptet.'));
+    if(known)left.appendChild(el('div','rec-d',r.d));
+    row.appendChild(left);
+    if(known){const c=recWood(r),bt=btn('Laga · '+c+' ved','small'+(pick&&(S.ved|0)>=c?' gold':''),()=>cookDish(r));bt.disabled=!pick||(S.ved|0)<c;row.appendChild(bt)}
+    list.appendChild(row)});
+  n.appendChild(list);
+  const r2=el('div','actions');r2.appendChild(btn('Stäng','quiet',closeSheet));n.appendChild(r2);
+  openSheet(n);
+}
+/* lilla skålen bredvid klockan visar att man är mätt */
+let buffKey='';
+function buffUI(){
+  const e=$('buffIc');if(!e)return;const b=buffOn(),k=b?b.id:'';
+  if(k===buffKey)return;buffKey=k;e.hidden=!b;
+  if(b)e.setAttribute('aria-label',RECBY[b.id].n+': '+RECBY[b.id].d);
+}
+/* --- Ritning i stugan --- */
+const STOVE={x:80,y:186,w:34,h:38},WOOD={x:56,y:200,w:20,h:16};
+function drawWoodStove(g,t){
+  const x=STOVE.x,y=STOVE.y,w=STOVE.w,yb=y+STOVE.h;
+  /* rökrör */
+  g.fillStyle='#1e2022';g.fillRect(x+w-10,CEIL-2,6,y-CEIL+4);g.fillStyle='#34373a';g.fillRect(x+w-9,CEIL-2,1.4,y-CEIL+4);
+  g.fillStyle='#2a2d30';g.fillRect(x+w-11,y-8,8,3);
+  /* skugga */
+  g.fillStyle='rgba(20,8,0,.45)';g.beginPath();g.ellipse(x+w/2,yb+1,w/2+5,4,0,0,7);g.fill();
+  /* ben */
+  g.fillStyle='#1a1b1d';[x+2,x+w-5].forEach(px=>g.fillRect(px,yb-4,3,5));
+  /* kropp */
+  const bg=g.createLinearGradient(x,0,x+w,0);bg.addColorStop(0,'#2b2e31');bg.addColorStop(.5,'#3a3e42');bg.addColorStop(1,'#232527');
+  g.fillStyle=bg;g.fillRect(x,y+4,w,STOVE.h-8);
+  /* spishäll med ringar */
+  g.fillStyle='#4a4e53';g.fillRect(x-2,y,w+4,5);g.fillStyle='#5c6166';g.fillRect(x-2,y,w+4,1.2);
+  g.strokeStyle='#26282b';g.lineWidth=.6;[x+8,x+21].forEach(cx=>{g.beginPath();g.ellipse(cx,y+2.4,5,1.6,0,0,7);g.stroke()});
+  /* mässingslist */
+  g.fillStyle='#b8893a';g.fillRect(x,y+6,w,1.2);
+  /* eldstadslucka med glöd */
+  const lit=fireOn(),fl=lit?.55+.45*Math.sin(t*8.3)*Math.sin(t*4.9):0;
+  g.fillStyle='#141516';g.fillRect(x+3,y+10,13,11);
+  const gg=g.createRadialGradient(x+9.5,y+17,1,x+9.5,y+16,7);gg.addColorStop(0,'rgba(255,230,140,'+(.7+.3*fl).toFixed(2)+')');gg.addColorStop(.5,'rgba(255,140,40,'+(.6*fl+.3).toFixed(2)+')');gg.addColorStop(1,'rgba(120,30,5,.6)');
+  if(lit){g.fillStyle=gg;g.fillRect(x+4.5,y+13,10,7)}else{g.fillStyle='#2a2422';g.fillRect(x+4.5,y+15,10,5);g.fillStyle='#4a3a30';g.fillRect(x+6,y+17,6,1.5)}
+  g.strokeStyle='#5c6166';g.lineWidth=.6;for(let k=0;k<3;k++){g.beginPath();g.moveTo(x+6+k*3.2,y+12);g.lineTo(x+6+k*3.2,y+20.5);g.stroke()}
+  /* ugnslucka */
+  g.fillStyle='#2f3236';g.fillRect(x+18,y+10,13,11);g.strokeStyle='#5c6166';g.strokeRect(x+18.5,y+10.5,12,10);
+  g.fillStyle='#b8893a';g.fillRect(x+22,y+14.5,5,1.4);
+  /* nedre lucka */
+  g.fillStyle='#26282b';g.fillRect(x+3,y+24,28,6);g.fillStyle='#b8893a';g.fillRect(x+15,y+26.4,5,1.2);
+  /* kaffepanna eller stekpanna */
+  if(CK.t>0){
+    g.fillStyle='#1c1d1f';g.beginPath();g.ellipse(x+12,y-.5,8,2.4,0,0,7);g.fill();g.fillRect(x+19,y-1.6,9,1.6);
+    g.fillStyle='#c98a4a';g.beginPath();g.ellipse(x+12,y-1.4,5,1.3,0,0,7);g.fill();
+    g.fillStyle='rgba(255,255,255,.75)';for(let k=0;k<4;k++){const pk=(t*3+k*.7)%1;g.beginPath();g.arc(x+8+k*2.6+Math.sin(t*9+k),y-2-pk*3,.45,0,7);g.fill()}
+  }else{
+    g.fillStyle='#8a929a';g.beginPath();g.moveTo(x+18,y);g.lineTo(x+20,y-7);g.lineTo(x+27,y-7);g.lineTo(x+29,y);g.closePath();g.fill();
+    g.fillStyle='#a9b1b8';g.fillRect(x+20,y-8.4,7,1.6);g.strokeStyle='#5c6166';g.lineWidth=.7;g.beginPath();g.moveTo(x+18.5,y-4);g.lineTo(x+15,y-6.5);g.stroke();
+  }
+  /* ånga/rök */
+  if(lit)for(let k=0;k<3;k++){g.fillStyle='rgba(240,240,245,.22)';const pk=(t*.5+k/3)%1;g.beginPath();g.arc((CK.t>0?x+12:x+23)+Math.sin(t+k)*1.5,y-9-pk*14,1.2+pk*2.5,0,7);g.fill()}
+  /* vedkorg */
+  const wx=WOOD.x,wy=WOOD.y,have=Math.min(6,Math.ceil((S.ved|0)/2));
+  g.fillStyle='#6a4a2a';g.fillRect(wx,wy+6,WOOD.w,WOOD.h-6);g.fillStyle='#7d5a34';for(let k=0;k<4;k++)g.fillRect(wx+1+k*5,wy+6,1,WOOD.h-6);
+  for(let k=0;k<have;k++){const lx=wx+3+(k%3)*5.2,ly=wy+5-Math.floor(k/3)*3.6;g.fillStyle='#8a5c34';g.beginPath();g.ellipse(lx,ly,2.6,2.2,0,0,7);g.fill();g.fillStyle='#c79a5e';g.beginPath();g.ellipse(lx,ly,1.4,1.1,0,0,7);g.fill()}
+  return fl;
+}
+function stovePress(p){
+  if(p.x>STOVE.x-4&&p.x<STOVE.x+STOVE.w+4&&p.y>STOVE.y-12&&p.y<STOVE.y+STOVE.h+4){showStove();return true}
+  if(p.x>WOOD.x-3&&p.x<WOOD.x+WOOD.w+3&&p.y>WOOD.y-6&&p.y<WOOD.y+WOOD.h+3){takeWood();return true}
+  return false;
+}
+
+/* --- Fiskodlingen --- */
+const FARM_SP=['regnbage','roding','oring','sik','kanada','lax'];
+const PEN_P=[12000,30000,60000],PEN_CAP=[10,16,24],PEN_UP=[8000,20000],AUTO_P=15000,FEED_P=150,FEED_N=10;
+const farmS=()=>(S.farm=S.farm||{pens:[],feed:0,auto:0,day:-1,news:[]});
+/* odlad fisk säljs till restauranger och betalar bättre än vild fisk på torget */
+const FARM_PM=1.6;
+/* foderautomaten fyller på direkt så länge det finns foder */
+function farmAuto(){const F0=farmS();if(!F0.auto)return;F0.pens.forEach(pen=>{const need=(pen.fish||[]).length-(pen.fed|0);if(need>0&&F0.feed>0){const take=Math.min(need,F0.feed);F0.feed-=take;pen.fed=(pen.fed|0)+take}})}
+const adultKg=f=>f.kg[0]+(f.kg[1]-f.kg[0])*.5;
+const farmMax=f=>f.kg[1]*1.2;
+/* kassarnas platser: i vattnet vid stugan, en bit från bryggan och från varandra */
+function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy||1,k=clamp(((px-ax)*dx+(py-ay)*dy)/L,0,1);return Math.hypot(px-ax-dx*k,py-ay-dy*k)}
+function farmSpots(){
+  if(M.id!=='stor'||!M.cabin)return null;if(M.fsp)return M.fsp;
+  const c=M.cabin,hx=c.hx||c.x,hy=c.hy||c.y,dx=c.x-hx,dy=c.y-hy,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,ex=c.x+ux*90,ey=c.y+uy*90;
+  const wet=(x,y,R)=>{for(let a=0;a<6.28;a+=.5){if(M.isLand(x+Math.cos(a)*R,y+Math.sin(a)*R))return false}return true};
+  const tri=(cx,cy,rot)=>[0,1,2].map(k=>{const a=rot+k*2.094;return {x:cx+Math.cos(a)*15,y:cy+Math.sin(a)*15}});
+  const good=T=>T.every(p=>wet(p.x,p.y,11)&&segDist(p.x,p.y,hx,hy,ex,ey)>19&&Math.hypot(p.x-hx,p.y-hy)>28);
+  /* en trekant av kassar i vattnet, vid sidan av bryggan */
+  for(let along=14;along<=70;along+=4)for(const side of [1,-1])for(let off=30;off<=60;off+=5){
+    const cx=c.x+ux*along-uy*off*side,cy=c.y+uy*along+ux*off*side;
+    for(let r=0;r<6.28;r+=.52){const T=tri(cx,cy,r);if(good(T))return M.fsp=T}}
+  return M.fsp=tri(c.x+ux*30-uy*40,c.y+uy*30+ux*40,0);
+}
+function farmPos(){const L=farmSpots();if(!L)return null;const n=Math.max(1,farmS().pens.length),P=L.slice(0,n);return {x:P.reduce((a,p)=>a+p.x,0)/n,y:P.reduce((a,p)=>a+p.y,0)/n}}
+function farmNear(){const L=farmSpots();if(!L||B.tx!=null)return false;const n=Math.max(1,farmS().pens.length);return L.slice(0,n).some(p=>Math.hypot(p.x-B.x,p.y-B.y)<30)}
+/* en kasse ritad i rätt perspektiv: ringen projiceras som en riktig cirkel på vattnet */
+function penRing(cx,cy,R,lift){const pts=[];for(let k=0;k<=24;k++){const a=k/24*6.283,p=proj(cx+Math.cos(a)*R,cy+Math.sin(a)*R);if(!p)return null;pts.push([p.x,p.y-lift*p.s])}return pts}
+function farmDyn(dyn,g,t,WIN){
+  const L=farmSpots();if(!L)return;const F0=farmS(),n=F0.pens.length;
+  if(!n){const s=L[0];dyn.push({y:s.y,fn:()=>{[[-6,0],[6,0],[0,-5],[0,5]].forEach((o,k)=>{const q=proj(s.x+o[0],s.y+o[1]);if(!q)return;const bob=Math.sin(t*2+k)*.4*q.s;
+    g.fillStyle=k%2?'#f2f0e6':'#e2702a';g.beginPath();g.arc(q.x,q.y-1.2*q.s+bob,1.3*q.s,0,7);g.fill()})}});return}
+  F0.pens.forEach((pen,i)=>{const s=L[i];dyn.push({y:s.y+9,fn:()=>{
+    const R=9,path=(pts)=>{g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath()};
+    const wat=penRing(s.x,s.y,R,0),top=penRing(s.x,s.y,R,1.6);if(!wat||!top)return;
+    path(wat);g.fillStyle=WIN?'rgba(200,215,230,.55)':'rgba(8,36,50,.5)';g.fill();
+    /* fiskar i kassen */
+    const cnt=Math.min(7,(pen.fish||[]).length);for(let k=0;k<cnt;k++){const a=t*(.7+k*.11)+k*1.9,q=proj(s.x+Math.cos(a)*R*.55,s.y+Math.sin(a)*R*.55);if(!q)continue;
+      g.fillStyle='rgba(220,236,242,.6)';g.beginPath();g.ellipse(q.x,q.y,1.3*q.s,.5*q.s,Math.cos(a)>0?.3:-.3,0,7);g.fill()}
+    /* nät och flytring */
+    g.strokeStyle='rgba(30,34,38,.55)';g.lineWidth=.5;for(let k=0;k<24;k+=3){g.beginPath();g.moveTo(wat[k][0],wat[k][1]);g.lineTo(top[k][0],top[k][1]);g.stroke()}
+    path(top);g.strokeStyle='#2a2d30';g.lineWidth=Math.max(.8,1.4*proj(s.x,s.y).s);g.stroke();
+    path(top);g.strokeStyle='#e8b84a';g.lineWidth=Math.max(.4,.6*proj(s.x,s.y).s);g.stroke();
+    for(let k=0;k<24;k+=4){const q=top[k];g.fillStyle='#f2f0e6';g.fillRect(q[0]-.6,q[1]-1.6,1.2,1.8)}
+  }})});
+}
+/* ett dygn i odlingen: fiskarna äter, växer och förökar sig */
+function farmDay(){
+  const F0=farmS();
+  F0.pens.forEach((pen,pi)=>{
+    const fish=pen.fish||(pen.fish=[]);if(!fish.length||!pen.sp)return;const f=FBY[pen.sp],need=fish.length;
+    if(F0.auto&&pen.fed<need){const take=Math.min(need-pen.fed,F0.feed|0);F0.feed-=take;pen.fed+=take}
+    const ratio=Math.min(1,(pen.fed||0)/need);pen.fed=Math.max(0,(pen.fed||0)-need);
+    if(ratio>0){
+      fish.forEach((o,k)=>{if(k<Math.ceil(need*ratio))o.kg=Math.min(farmMax(f),Math.round((o.kg*1.32+.03)*100)/100)});
+      if(ratio>=1){pen.hunger=0;
+        const adults=fish.filter(o=>o.kg>=adultKg(f)).length,cap=PEN_CAP[pen.lvl|0];let born=0;
+        for(let k=0;k<Math.floor(adults/2);k++){if(fish.length>=cap)break;if(Math.random()<.45){const nb=Math.random()<.4?2:1;for(let j=0;j<nb&&fish.length<cap;j++){fish.push({kg:Math.round(f.kg[0]*.6*100)/100});born++}}}
+        if(born)F0.news.push('Kasse '+(pi+1)+': '+born+' nya yngel av '+f.name.toLowerCase()+'.');
+      }
+    }else{pen.hunger=(pen.hunger|0)+1;
+      if(pen.hunger>=2){fish.sort((a,b)=>a.kg-b.kg);fish.shift();F0.news.push('Kasse '+(pi+1)+': en fisk svalt ihjäl. Glöm inte att mata.');if(!fish.length)pen.sp=null}
+      else F0.news.push('Kasse '+(pi+1)+': fiskarna är hungriga.')}
+  });
+  if(F0.news.length>8)F0.news=F0.news.slice(-8);
+}
+function homeTick(){
+  if(mode==='menu')return;
+  const F0=farmS(),d=dayIdx();
+  if(F0.day<0||F0.day>d){F0.day=d;return}
+  let n=0;while(F0.day<d&&n<6){F0.day++;n++;farmDay()}
+  if(n){save();if(F0.pens.some(p=>(p.fish||[]).length))toast('Ett nytt dygn i fiskodlingen. Titta till fiskarna när du har tid.')}
+  buffUI();
+  if(CK.t>0)CK.t-=1/60;
+  if(S.cabinStory&&mode==='sail'&&!sheetOpen){S.cabinStory=0;save();setTimeout(()=>introStory(()=>toast('Morfars stuga ligger vid Storsjöns sydvästra strand. Där kan du laga mat, och senare starta en fiskodling.')),600)}
+}
+/* bara fisk som fötts i odlingen säljs som odlad till restaurangpris. Vild fisk man släppt i ger vanligt pris. */
+const farmPrice=(f,kg,o)=>Math.round(priceFor(f,kg)*(o&&o.wild?1:FARM_PM)*buffV('price'));
+/* sälj: 'keep' = alla vuxna utom de två största (avelsparet), 'all' = töm hela kassen */
+function farmSellList(pen,mode){const f=FBY[pen.sp],fish=pen.fish||[];
+  if(mode==='all')return fish.slice();
+  /* avelsparet: helst vilda fiskar, eftersom de ändå bara ger vanligt pris */
+  const ad=fish.filter(o=>o.kg>=adultKg(f)).sort((a,b)=>(b.wild?1:0)-(a.wild?1:0)||b.kg-a.kg);return ad.slice(2);}
+function farmSell(pi,mode){
+  const pen=farmS().pens[pi],f=FBY[pen.sp],L=farmSellList(pen,mode||'keep');if(!L.length)return;
+  let sum=0;L.forEach(o=>sum+=farmPrice(f,o.kg,o));pen.fish=pen.fish.filter(o=>L.indexOf(o)<0);
+  if(!pen.fish.length)pen.sp=null;
+  S.money+=sum;S.stats.earned+=sum;save();updateHUD();SND.coin&&SND.coin();toast('Sålde '+L.length+' odlade '+f.name.toLowerCase()+' för '+kr(sum)+'.');checkAch();showFarm();
+}
+function farmFishInfo(pi,o){
+  const pen=farmS().pens[pi],f=FBY[pen.sp],ad=o.kg>=adultKg(f),n=el('div');
+  n.appendChild(el('h2',null,f.name+' · '+kgTxt(o.kg)));
+  n.appendChild(bigFish(f,120,false,false));
+  n.appendChild(el('p','sub',(ad?'Vuxen och redo att säljas, eller att få yngel.':'Ung fisk som fortfarande växer. Vuxen vid ungefär '+kgTxt(adultKg(f))+'.')+' Värd ungefär '+kr(farmPrice(f,o.kg,o))+'.'));
+  const r=el('div','actions');
+  r.appendChild(btn('Tillbaka','quiet',showFarm));
+  r.appendChild(btn('Sälj för '+kr(farmPrice(f,o.kg,o)),'gold',()=>{const k=pen.fish.indexOf(o);if(k<0)return;pen.fish.splice(k,1);if(!pen.fish.length)pen.sp=null;const v=farmPrice(f,o.kg,o);S.money+=v;S.stats.earned+=v;save();updateHUD();SND.coin&&SND.coin();toast('Sålde en '+f.name.toLowerCase()+' för '+kr(v)+'.');checkAch();showFarm()}));
+  n.appendChild(r);openSheet(n);
+}
+function farmRelease(pi){
+  const F0=farmS(),pen=F0.pens[pi],cap=PEN_CAP[pen.lvl|0];
+  const ok=S.hold.map((h,i)=>({h,i})).filter(o=>FARM_SP.indexOf(o.h.id)>=0&&(!pen.sp||o.h.id===pen.sp));
+  if(!ok.length){toast(pen.sp?'Du har ingen '+FBY[pen.sp].name.toLowerCase()+' i lastrummet.':'Du har ingen fisk i lastrummet som går att odla. Prova regnbåge, röding, öring, sik, kanadaröding eller lax.');return}
+  const n=el('div');n.appendChild(el('h2',null,'Släpp i fisk'));
+  n.appendChild(el('p','sub','Fisken kommer från lastrummet. En kasse kan bara ha en art. Det får plats '+(cap-pen.fish.length)+' till.'));
+  const sp={};ok.forEach(o=>{(sp[o.h.id]=sp[o.h.id]||[]).push(o)});
+  for(const id in sp){const row=el('div','rec');const L=el('div');L.appendChild(el('div','name',FBY[id].name));L.appendChild(el('div','sub',sp[id].length+' st i lastrummet'));row.appendChild(L);
+    row.appendChild(btn('Släpp i','small gold',()=>{const room=cap-pen.fish.length;if(room<=0){toast('Kassen är full.');return}
+      const take=sp[id].slice(0,room).sort((a,b)=>b.i-a.i);take.forEach(o=>{S.hold.splice(o.i,1);pen.fish.push({kg:o.h.kg,wild:1})});pen.sp=id;farmAuto();save();updateHUD();toast(take.length+' '+FBY[id].name.toLowerCase()+' simmar nu i kasse '+(pi+1)+'.');showFarm()}));
+    n.appendChild(row)}
+  const r2=el('div','actions');r2.appendChild(btn('Tillbaka','quiet',showFarm));n.appendChild(r2);openSheet(n);
+}
+function farmFeed(pi){
+  const F0=farmS(),pen=F0.pens[pi],need=pen.fish.length-(pen.fed|0);
+  if(need<=0){toast('Fiskarna har redan mat för i dag.');return}
+  if((F0.feed|0)<=0){toast('Du har inget foder. Köp foder eller mal ner småfisk.');return}
+  const take=Math.min(need,F0.feed);F0.feed-=take;pen.fed=(pen.fed|0)+take;save();toast('Du gav kasse '+(pi+1)+' '+take+' portioner foder.');showFarm();
+}
+function farmGrind(){
+  const L=S.hold.map((h,i)=>({h,i})).filter(o=>SMALLF.indexOf(o.h.id)>=0).sort((a,b)=>b.i-a.i);
+  if(!L.length){toast('Du har ingen småfisk i lastrummet. Mört, nors och bergsimpa duger.');return}
+  L.forEach(o=>S.hold.splice(o.i,1));const F0=farmS();F0.feed+=L.length*2;save();updateHUD();toast('Du malde '+L.length+' småfiskar till '+(L.length*2)+' portioner foder.');showFarm();
+}
+function cabinTips(){
+  const n=el('div');n.appendChild(el('h2',null,'Det här finns i stugan'));
+  const L=[['Vedkorgen','Bredvid spisen. Där ligger veden du köper i Sport & Fiske.'],
+    ['Vedspisen','Laga mat av fisken i lastrummet. Varje rätt kostar ved. Maten ger en fördel i ett dygn, till exempel att fisken nappar oftare eller att linan håller bättre.'],
+    ['Väggarna','Tryck på väggen för att sätta upp dina finaste fångster som troféer.'],
+    ['Akvariet','Fisk du fångar kan simma här i stället för att säljas.']];
+  const box=el('div','notes');L.forEach(r=>{const d=el('div','note col');d.appendChild(el('b',null,r[0]));d.appendChild(el('div',null,r[1]));box.appendChild(d)});n.appendChild(box);
+  openSheet(n);stickySheet=true;
+}
+function showFarm(){
+  farmAuto();
+  const F0=farmS(),n=el('div','farm');
+  n.appendChild(el('h2',null,'Fiskodlingen'));
+  if(!F0.pens.length){
+    n.appendChild(el('p','greet','Här i viken vid morfars stuga är vattnet kallt och klart, perfekt för en egen fiskodling. Sätt ut en kasse, släpp i fisk du fångat och mata dem varje dygn. Välmatade fiskar växer och förökar sig, och de vuxna kan du sälja.'));
+    n.appendChild(el('p','sub','Fisk som går att odla: regnbåge, röding, öring, sik, kanadaröding och lax. En kasse rymmer '+PEN_CAP[0]+' fiskar från början och kan utökas.'));
+    const r=el('div','actions'),b=btn('Sätt ut en kasse för '+kr(PEN_P[0]),S.money>=PEN_P[0]?'gold':'',()=>{if(S.money<PEN_P[0])return;S.money-=PEN_P[0];F0.pens.push({sp:null,fish:[],lvl:0,fed:0,hunger:0});F0.day=dayIdx();save();updateHUD();SND.buy();toast('Kassen ligger ute! Släpp i fisk från lastrummet.');showFarm()});
+    b.disabled=S.money<PEN_P[0];r.appendChild(b);r.appendChild(btn('Inte nu','quiet',closeSheet));n.appendChild(r);openSheet(n);return;
+  }
+  if(F0.news.length){n.appendChild(el('p','greet',F0.news.join('<br>')));F0.news=[];save()}
+  const fr=el('div','rec col');const fl=el('div');fl.appendChild(el('div','name','Foder: '+(F0.feed|0)+' portioner'));fl.appendChild(el('div','sub','Varje fisk äter en portion per dygn.'+(F0.auto?' Foderautomaten matar av sig själv.':'')));fr.appendChild(fl);
+  const fb=el('div','farm-btns');
+  fb.appendChild(btn('Köp '+FEED_N+' · '+kr(FEED_P),'small'+(S.money>=FEED_P?' gold':''),()=>{if(S.money<FEED_P)return;S.money-=FEED_P;F0.feed+=FEED_N;save();updateHUD();showFarm()}));
+  const nsm=S.hold.filter(h=>SMALLF.indexOf(h.id)>=0).length;
+  const gb=btn('Mal småfisk ('+nsm+')','small',farmGrind);gb.disabled=!nsm;fb.appendChild(gb);
+  fr.appendChild(fb);n.appendChild(fr);
+  F0.pens.forEach((pen,pi)=>{
+    const f=pen.sp?FBY[pen.sp]:null,cap=PEN_CAP[pen.lvl|0],fish=pen.fish||[];
+    const card=el('div','pen');
+    const head=el('div','pen-h');head.appendChild(el('b',null,'Kasse '+(pi+1)+(f?' · '+f.name:' · tom')));head.appendChild(el('span','sub',fish.length+'/'+cap+' fiskar'));card.appendChild(head);
+    if(f){
+      const ad=fish.filter(o=>o.kg>=adultKg(f)),avg=fish.reduce((a,o)=>a+o.kg,0)/fish.length,val=ad.reduce((a,o)=>a+Math.round(priceFor(f,o.kg)*FARM_PM*buffV('price')),0);
+      const fedOk=(pen.fed|0)>=fish.length;
+      card.appendChild(el('div','sub','Snittvikt '+kgTxt(avg)+' · '+ad.length+' vuxna · '+(fedOk?'<span class="goldtxt">Matade för i dag</span>':pen.hunger?'<span style="color:#ff9a7a">Hungriga!</span>':'Behöver mat i dag')));
+      const bar=el('div','pen-fish');fish.slice().sort((a,b)=>b.kg-a.kg).forEach(o=>{const i=el('button');i.type='button';i.setAttribute('aria-label',f.name+' '+kgTxt(o.kg));const k=clamp(o.kg/farmMax(f),.15,1);i.style.width=Math.round(10+18*k)+'px';i.className=(o.kg>=adultKg(f)?'ad':'');i.addEventListener('click',()=>farmFishInfo(pi,o));bar.appendChild(i)});card.appendChild(bar);
+      card.appendChild(el('div','sub pen-tip','Tryck på en fisk för att se den eller sälja just den.'));
+      const bs=el('div','farm-btns');
+      const m=btn('Mata','small'+(!fedOk&&F0.feed>0?' gold':''),()=>farmFeed(pi));m.disabled=fedOk||!F0.feed;bs.appendChild(m);
+      const rl=btn('Släpp i','small',()=>farmRelease(pi));rl.disabled=fish.length>=cap;bs.appendChild(rl);
+      const kp=farmSellList(pen,'keep'),kv=kp.reduce((a,o)=>a+farmPrice(f,o.kg,o),0),av=fish.reduce((a,o)=>a+farmPrice(f,o.kg,o),0);
+      const sl=btn(kp.length?'Sälj vuxna, behåll ett par · '+kr(kv):ad.length?'Behåller avelsparet':'Inga vuxna än','small'+(kp.length?' gold':''),()=>farmSell(pi,'keep'));sl.disabled=!kp.length;bs.appendChild(sl);
+      bs.appendChild(btn('Sälj alla · '+kr(av),'small',()=>farmSell(pi,'all')));
+      card.appendChild(bs);
+    }else{const bs=el('div','farm-btns');bs.appendChild(btn('Släpp i fisk','small gold',()=>farmRelease(pi)));card.appendChild(bs)}
+    if((pen.lvl|0)<PEN_UP.length){const p=PEN_UP[pen.lvl|0],ub=btn('Utöka kassen till '+PEN_CAP[(pen.lvl|0)+1]+' platser · '+kr(p),'small',()=>{if(S.money<p)return;S.money-=p;pen.lvl=(pen.lvl|0)+1;save();updateHUD();SND.buy();showFarm()});ub.disabled=S.money<p;card.appendChild(ub)}
+    n.appendChild(card);
+  });
+  const ex=el('div','actions');
+  if(F0.pens.length<PEN_P.length){const p=PEN_P[F0.pens.length],b=btn('Ny kasse · '+kr(p),S.money>=p?'gold':'',()=>{if(S.money<p)return;S.money-=p;F0.pens.push({sp:null,fish:[],lvl:0,fed:0,hunger:0});save();updateHUD();SND.buy();showFarm()});b.disabled=S.money<p;ex.appendChild(b)}
+  if(!F0.auto){const b=btn('Foderautomat · '+kr(AUTO_P),'quiet',()=>{if(S.money<AUTO_P)return;S.money-=AUTO_P;F0.auto=1;save();updateHUD();SND.buy();toast('Foderautomaten matar fiskarna av sig själv så länge det finns foder.');showFarm()});b.disabled=S.money<AUTO_P;ex.appendChild(b)}
+  n.appendChild(ex);
+  n.appendChild(el('p','sub','Matade fiskar växer varje dygn, och vuxna par får yngel. Hungriga fiskar växer inte, och efter två dygn utan mat dör de.'));
+  openSheet(n);
+}
+
+$('buffIc').addEventListener('click',e=>{e.stopPropagation();const b=buffOn();if(b){const r=RECBY[b.id];toast(r.n+': '+r.d+' Ungefär '+Math.max(1,Math.round((b.until-tt)/DAY*24))+' timmar kvar.')}});
 /* ---------- Knappar och styrning ---------- */
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('button'))SND.click()});
 $('btnLog').addEventListener('click',showLog);
@@ -6062,7 +6429,7 @@ $('btnAct').addEventListener('click',()=>{
   if(nearDock&&M.id==='nak'){SND.ramp();switchMap('stor','ramp');updateAction();setWhere();toast('Tillbaka på Storsjön vid båtrampen');return}
   if(nearDock)showHarborHub();
   else if(nearComp)showCompSheet();
-  else if(nearCabin){if(S.cabin)enterCabin();else showCabinSale()}
+  else if(nearCabin){S.cabin=1;enterCabin()}
   else if(nearYard)openYard();
 });
 let down=false;
@@ -6322,7 +6689,7 @@ function frame(now){
   if(mode!=='cabin'&&mode!=='cave'&&!inCaveMap())wxScreen(ctx,tt);
   if(mode==='fish'&&F.land)landingDraw(tt);
   post(tt);
-  updateGear();thrUI();clockUI();nudgeCheck();
+  updateGear();thrUI();clockUI();nudgeCheck();homeTick();
   requestAnimationFrame(frame);
 }
 placeAt(M.dock);
