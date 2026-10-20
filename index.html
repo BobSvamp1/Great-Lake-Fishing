@@ -2134,7 +2134,7 @@ function trollDraw(g,t,sq){
 const SEASONS=[
  {n:'Våren',adj:'vår',start:'Våren är här! Isen har gått upp och gäddorna leker i de grunda vikarna.',mul:{gadda:2.2,abborre:1.4,mort:1.3,sik:.7,lake:.6}},
  {n:'Sommaren',adj:'sommar',start:'Sommaren är här! Harren och regnbågen är i farten.',mul:{harr:1.5,regnbage:1.5,mort:1.2,abborre:1.2,lake:.6}},
- {n:'Hösten',adj:'höst',start:'Hösten har kommit. Siken samlas för att leka, och storöringen vandrar upp i älven.',mul:{sik:2.2,oring:1.6,lake:1.3,kanada:1.3,harr:.8}},
+ {n:'Hösten',adj:'höst',start:'Hösten har kommit. Siken samlas för att leka, och laxen och storöringen vandrar upp i älven.',mul:{sik:2.2,oring:1.6,lax:2,lake:1.3,kanada:1.3,harr:.8}},
  {n:'Vintern',adj:'vinter',start:'Vintern är här! Sjöarna har frusit och skotern står redo. Laken nappar bäst mitt i vintern.',mul:{lake:1.8,roding:1.4,abborre:1.2,gadda:.8}}];
 const SEASON_LEN=1080;
 const seasonMul=f=>((SEASONS[S.season|0]||{}).mul||{})[f.id]||1;
