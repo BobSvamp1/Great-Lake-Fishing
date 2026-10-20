@@ -379,6 +379,9 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .yv{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;gap:8px;padding:max(10px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
   background:radial-gradient(ellipse at 50% 20%,#2a2620,#0e0d0c 75%);color:#f4efe4;overflow:hidden}
 .yv>*{flex-shrink:0}
+/* på stora skärmar: lika bred som resten av spelets rutor */
+.yv{padding-left:max(12px,calc((100vw - 560px)/2));padding-right:max(12px,calc((100vw - 560px)/2))}
+@media (min-aspect-ratio:1/1){.yv-stagew{align-self:center;width:min(100%,max(260px,calc((100dvh - 440px)*240/140)))}}
 .yv-top{display:flex;align-items:center;gap:10px}
 .yv-title{flex:1;font-family:var(--font-display);font-size:26px;font-weight:700;color:#fff4d8;letter-spacing:.02em;text-shadow:0 2px 0 #000}
 .yv-money{font-family:var(--font-display);font-weight:600;font-size:17px;color:#9df5b0;text-shadow:0 1px 0 #000}
