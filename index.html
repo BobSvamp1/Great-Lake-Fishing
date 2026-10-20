@@ -2,7 +2,7 @@
 <title>Great Lake Fishing 6</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Cinzel:wght@600;700&family=Fredoka:wght@500;600;700&display=swap">
 <style>
 /* Layout: one-screen portrait game. Glass HUD on top, rounded HD stage, action buttons below, sheets slide up over everything. */
 :root{
@@ -418,6 +418,20 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .q-prize{display:block;width:100%;max-width:320px;margin:8px auto;border-radius:10px;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid #1f130a}
 .qd-note{font-style:italic;color:#f2e3bd;background:rgba(0,0,0,.22);padding:10px 12px;border-radius:8px;line-height:1.45}
 @media (prefers-reduced-motion:reduce){#menu h1,#toast{animation:none}}
+#lakeT{position:fixed;left:0;right:0;top:24%;z-index:30;pointer-events:none;text-align:center;opacity:0;color:#f6efdc}
+#lakeT .lt-n{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:clamp(30px,9vw,46px);letter-spacing:.08em;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 18px rgba(0,0,0,.6)}
+#lakeT .lt-o{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px auto 0;width:min(78%,360px)}
+#lakeT .lt-o i{flex:1;height:1.5px;background:linear-gradient(90deg,rgba(246,239,220,0),rgba(246,239,220,.85))}
+#lakeT .lt-o i:last-child{background:linear-gradient(90deg,rgba(246,239,220,.85),rgba(246,239,220,0))}
+#lakeT .lt-o b{width:8px;height:8px;transform:rotate(45deg);border:1.5px solid rgba(246,239,220,.9)}
+#lakeT .lt-s{margin-top:7px;font-family:Cinzel,Georgia,serif;font-weight:600;font-size:14px;letter-spacing:.32em;text-transform:uppercase;color:#e8c860;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+#lakeT .lt-s:empty{display:none}
+#lakeT.show{animation:lakeIn 4.6s ease-in-out forwards}
+#lakeT.show .lt-o i{animation:ltLine 4.6s ease-out forwards}
+@keyframes lakeIn{0%{opacity:0;transform:translateY(6px)}14%{opacity:1;transform:none}74%{opacity:1}100%{opacity:0}}
+@keyframes ltLine{0%{transform:scaleX(.2)}22%{transform:scaleX(1)}100%{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){#lakeT.show{animation-name:lakeFade}#lakeT.show .lt-o i{animation:none}}
+@keyframes lakeFade{0%,100%{opacity:0}12%,76%{opacity:1}}
 </style>
 
 <div id="hud">
@@ -450,6 +464,7 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
     </div>
   </div>
   <div id="toast" hidden></div>
+  <div id="lakeT" aria-live="polite"><div class="lt-n"></div><div class="lt-o"><i></i><b></b><i></i></div><div class="lt-s"></div></div>
 </div>
 <div id="bar">
   <button class="btn" id="btnLog" type="button">Loggbok</button>
@@ -1947,6 +1962,13 @@ function switchMap(id,at){
   TR.obj=null;
   M=MAPS[id];buildTex(M);const po=typeof at==='string'&&at.indexOf('p:')===0?(M.portals||[]).find(p=>p.id===at.slice(2)):null;placeAt(po||(at==='ramp'&&M.ramp?M.ramp:M.dock));ZN.cur=null;ZN.banner=null;nearPortal=null;
   nearSpot=null;nearDock=false;nearRamp=false;nearComp=false;nearCabin=false;nearYard=false;
+  if(mode!=='menu')lakeTitle();
+}
+/* sjönamnet glider fram mitt på skärmen när man kommer till en ny sjö */
+function lakeTitle(){
+  const e=$('lakeT');if(!e||!M)return;if(!S.disc){S.disc={};if((S.catches|0)>0){S.disc.stor=1;if(S.nakten)S.disc.nak=1}}const first=!S.disc[M.id];S.disc[M.id]=1;
+  e.querySelector('.lt-n').textContent=M.name;e.querySelector('.lt-s').textContent=first?'Upptäckt':'';
+  e.classList.remove('show');void e.offsetWidth;e.classList.add('show');
 }
 function spotSeen(s){return (S.seen[s.id]||[]).filter(id=>id!=='odjur'&&id!=='legend').length}
 function spotTotal(s){return Object.keys(s.pool).length}
@@ -4273,7 +4295,7 @@ function setWhere(){
   else if(ZN.cur)p=ZN.cur.name;
   if(mode==='cabin')p='Stugan';
   if(mode==='cave')p='Gädd-Gurras grotta';
-  $('whereTxt').textContent=M.name+(p?' · '+p:'');wxIcon();
+  $('whereTxt').textContent=p;wxIcon();
 }
 function updateAction(){
   const b=$('btnAct');
@@ -5630,7 +5652,7 @@ function showStartMenu(){
 function startGame(){
   auInit();
   $('menu').hidden=true;document.body.classList.remove('inmenu');
-  mode='sail';setMood('sail');updateHUD();updateAction();setWhere();fit();
+  mode='sail';setMood('sail');updateHUD();updateAction();setWhere();fit();setTimeout(lakeTitle,350);
   if(!S.played){S.played=1;save()}
   if(S.depthRefundMsg){const r2=S.depthRefundMsg;S.depthRefundMsg=0;save();setTimeout(()=>toast('Djupkorten finns inte längre, ekolodet visar djupet nu. Du fick tillbaka '+kr(r2)+'.'),1600)}
   if(S.mapRefundMsg){const r=S.mapRefundMsg;S.mapRefundMsg=0;save();setTimeout(()=>toast('Fiskekartorna finns inte längre. Du fick tillbaka '+kr(r)+'.'),800)}
