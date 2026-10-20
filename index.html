@@ -513,7 +513,7 @@ try{const raw=localStorage.getItem(SAVE);
     catch(e){SAVE_OK=false;try{localStorage.setItem(SAVE+'-trasig-'+Date.now(),raw)}catch(_){}SAVE_OK=true}}
 }catch(e){}
 var CLOUD=null;
-function save(){try{S.savedAt=Date.now();localStorage.setItem(SAVE,JSON.stringify(S))}catch(e){}if(CLOUD&&CLOUD.user)cloudPush()}
+function save(){try{S.tt=tt%(DAY*100)}catch(e){}try{S.savedAt=Date.now();localStorage.setItem(SAVE,JSON.stringify(S))}catch(e){}if(CLOUD&&CLOUD.user)cloudPush()}
 const SAVE_PREFIX='GLF1:';
 function exportSave(){try{return SAVE_PREFIX+btoa(unescape(encodeURIComponent(JSON.stringify(S))))}catch(e){return ''}}
 function parseSave(code){
@@ -4271,7 +4271,12 @@ function cabinSmoke(dyn,g,t){
     const r=(1.2+k*3)*p.s;g.fillStyle='rgba(230,230,235,'+((1-k)*.55).toFixed(2)+')';g.beginPath();g.arc(p.x+Math.sin(t+i)*p.s,p.y-(17+k*16)*p.s,r,0,7);g.fill()}}});
 }
 /* ---------- Gränssnitt ---------- */
-let toastTimer=0,lockSheet=false,tt=0;
+let toastTimer=0,lockSheet=false,tt=(typeof S.tt==='number'&&isFinite(S.tt))?S.tt:0;
+/* klockan sparas lokalt då och då och när man lämnar spelet, så att tiden fortsätter där man var */
+function saveClock(){try{S.tt=tt%(DAY*100);localStorage.setItem(SAVE,JSON.stringify(S))}catch(e){}}
+setInterval(()=>{if(mode!=='menu')saveClock()},15000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveClock()});
+window.addEventListener('pagehide',saveClock);
 function toast(msg){
   const e=$('toast');e.textContent=msg;e.hidden=false;
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.hidden=true},2600);
@@ -5714,7 +5719,7 @@ function cloudSync(){
 }
 function cloudApply(o){
   const wasMenu=mode==='menu';
-  const d=defaultS();d.music=S.music;d.sfx=S.sfx;S=Object.assign(d,o||{});S.cloudUid=CLOUD.user.uid;migrateSave();save();
+  const d=defaultS();d.music=S.music;d.sfx=S.sfx;S=Object.assign(d,o||{});S.cloudUid=CLOUD.user.uid;migrateSave();if(typeof S.tt==='number'&&isFinite(S.tt))tt=S.tt;save();
   if(mode==='fish')exitFish();switchMap('stor','dock');updateHUD();updateAction();setWhere();
   if(sheetOpen)closeSheet();if(wasMenu)showStartMenu();
   toast(o?'Ditt sparade spel är hämtat från molnet.':'Nytt spel på ditt konto.');
