@@ -4693,6 +4693,7 @@ function tierLadder(n,cat,intro){
   const g=GEAR[cat];
   if(intro)n.appendChild(el('p','sub',intro));
   g.items.forEach((it,i)=>{
+    if(cat==='sonar'&&i===0)return;
     let right;
     if(i<=S[cat])right=el('span','max',i===S[cat]?'Har':'Klar');
     else if(i===S[cat]+1)right=buyBtn(it.p,()=>buy(cat));
