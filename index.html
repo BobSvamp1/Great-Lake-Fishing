@@ -609,7 +609,8 @@ function migrateSave(){
   const d=defaultS();['rods','baits','stats','medals','ach'].forEach(k=>{S[k]=Object.assign({},d[k],S[k])});
   if(!Array.isArray(S.orders))S.orders=[];
   S.orders=S.orders.filter(o=>FBY[o.fid]&&o.lvl!=null);
-  if(S.boat>3)S.boat=3;if(S.rod>4)S.rod=4;
+  /* båtnumret får vara upp till trålaren (5); förr klipptes det till 3 och gav då bort trollingbåten */
+  if(!(S.boat>=0&&S.boat<=5))S.boat=0;if(S.rod>4)S.rod=4;
   /* Version 3: de köpta fiskekartorna är borttagna, pengarna betalas tillbaka en gång */
   if(S.maps&&(S.maps.stor||S.maps.nak)){const r=(S.maps.stor?1200:0)+(S.maps.nak?900:0);S.money+=r;S.mapRefundMsg=(S.mapRefundMsg||0)+r}
   S.maps={};
