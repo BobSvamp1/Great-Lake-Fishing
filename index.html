@@ -2061,7 +2061,7 @@ function pickFish(spot,u){
   let monster=false;
   if(!f.beast&&f.max&&Math.random()<0.005*(spot.big||1)*(1+0.2*S.rod)*(elr?2.5:1)*(!S.winter&&S.boat===5?2.5:1)*buffV('giant')){giant=true;kg=f.kg[1]+(f.max-f.kg[1])*Math.pow(Math.random(),1.8);
     /* ingen hård gräns: var 20:e bjässe går över den vanliga maxvikten, och för varje tiondel av maxvikten över halveras chansen */
-    if(!f.legend&&Math.random()<.05){monster=true;kg=f.max-f.max*.1*Math.log2(Math.max(1e-300,Math.random()))}}
+    if(!f.legend&&Math.random()<.05){monster=true;kg=Math.min(f.max*2.9,f.max-f.max*.1*Math.log2(Math.max(1e-300,Math.random())))}}
   kg=f.beast?Math.round(kg):(kg>=1?Math.round(kg*10)/10:Math.round(kg*100)/100);
   kg=Math.max(kg,f.kg[0]);
   /* Gyllene fiskar: ungefär 1 på 250, värda fem gånger mer */
@@ -6105,8 +6105,9 @@ function lbName(){
 function boardPush(){
   if(!CLOUD||!CLOUD.ready||!CLOUD.user||!hasProgress(S))return;
   const b=bestFish(S);
-  CLOUD.db.collection('board').doc(CLOUD.user.uid).set({name:lbName(),catches:S.catches|0,earned:Math.round((S.stats&&S.stats.earned)||0),
-    bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:'',upd:Date.now()}).catch(()=>{});
+  /* tiden sätts av Firebase, och reglerna i Firestore nekar siffror som ökar orimligt fort */
+  CLOUD.db.collection('board').doc(CLOUD.user.uid).set({name:String(lbName()).slice(0,20),catches:S.catches|0,earned:Math.round((S.stats&&S.stats.earned)||0),
+    bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:'',upd:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
 }
 const LB={tab:'catches',cache:{}};
 const LBT=[{id:'catches',n:'Flest fiskar'},{id:'bestKg',n:'Största fisk'},{id:'earned',n:'Pengar tjänat'}];
