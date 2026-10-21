@@ -6145,7 +6145,8 @@ function showBoard(){
     if(!docs.length){list.appendChild(el('li','lb-wait','Ingen är med än. Bli först!'));return}
     docs.forEach((d,i)=>{const li=el('li',d.id===me?'me':'');
       li.innerHTML='<span class="lb-r">'+(i<3?['🥇','🥈','🥉'][i]:(i+1)+'.')+'</span><span class="lb-n">'+String(d.name||'Fiskare').replace(/[<>&]/g,'')+'</span><span class="lb-v">'+lbVal(tab,d)+'</span>';list.appendChild(li)})};
-  if(c&&Date.now()-c.t<30000){fill(c.d);return}
+  /* topplistan hämtas högst var femte minut per flik, så läsningarna i Firebase räcker längre */
+  if(c&&Date.now()-c.t<300000){fill(c.d);return}
   if(CLOUD.user)boardPush(true);
   CLOUD.db.collection('board').orderBy(tab,'desc').limit(25).get().then(qs=>{const d=[];qs.forEach(x=>d.push(Object.assign({id:x.id},x.data())));LB.cache[tab]={t:Date.now(),d:d};fill(d)})
     .catch(()=>{if(list.isConnected){list.innerHTML='';list.appendChild(el('li','lb-wait','Kunde inte hämta topplistan just nu.'))}});
