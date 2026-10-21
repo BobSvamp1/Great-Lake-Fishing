@@ -2845,7 +2845,7 @@ function spawnFish(initial){
   const hd=(HABIT[p.f.id]||{d:.5}).d,y=clamp(130+hd*155+(Math.random()+Math.random()+Math.random()-1.5)*30,128,290);
   const x=initial?rnd(24,156):(dir>0?-16:W+16);
   const o={p:p,x:x,y:y,vx:dir*(p.f.beast?10:13+Math.random()*13),ph:Math.random()*6,int:0};
-  if(F.spot&&F.spot.river&&!S.winter){o.vx=(initial?(Math.random()<.5?-1:1):-1)*rnd(2,5);if(!initial)o.x=W+16}
+  if(F.spot&&F.spot.river&&!S.winter){o.vx=(initial?(Math.random()<.5?-1:1):-1)*rnd(7,12);if(!initial)o.x=W+16}
   if(S.winter){o.d=clamp((ICE_DEPTH[p.f.id]||.5)+rnd(-.18,.18),.04,.97);o.vx*=.7}
   F.school.push(o);
 }
