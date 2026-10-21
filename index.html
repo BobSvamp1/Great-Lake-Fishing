@@ -369,6 +369,21 @@ body{padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px
 .pen{padding:10px 12px;margin:8px 0;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--line)}
 .pen-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
 .pen-fish{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.cal{display:grid;grid-template-columns:auto repeat(3,1fr);gap:5px;margin:10px 0 6px;align-items:stretch}
+.cal .cs{font-family:var(--font-display);font-size:15px;align-self:center;padding-right:4px;text-shadow:0 1px 0 #1d1008}
+.cal .cd{border-radius:9px;padding:6px 4px;min-height:48px;background:rgba(255,236,200,.08);border:2px solid rgba(31,19,10,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center}
+.cal .cn{font-size:12px;color:#d8c4a0}
+.cal .ch{font-size:12px;font-weight:700;color:#ffe08a;line-height:1.15}
+.cal .cd.hol{background:rgba(184,57,42,.28)}
+.cal .cd.past{opacity:.5}
+.cal .cd.now{border-color:#f2c75c;box-shadow:0 0 0 2px rgba(242,199,92,.35);background:rgba(242,199,92,.18)}
+.cal .cd.now .cn{color:#fff6dc;font-weight:700}
+.hlist{display:flex;flex-direction:column;gap:6px}
+.hrow{padding:7px 9px;border-radius:9px;background:rgba(255,236,200,.06)}
+.hrow.now{background:rgba(242,199,92,.16);outline:2px solid rgba(242,199,92,.5)}
+.hrow b{color:#ffe08a}.hrow b small{color:#d8c4a0;font-weight:400}
+.hrow p{margin:2px 0 0}
+.hol-note{color:#ffe08a!important}
 .pen-fish button{display:block;height:14px;padding:0;border:0;border-radius:7px;background:#8fb8c8;cursor:pointer;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
 .pen-fish button.ad{background:#e8b84a}
 .pen-tip{font-size:12.5px;opacity:.8}
@@ -562,7 +577,7 @@ function flushTxt(){
     g.save();if(o.alpha!=null)g.globalAlpha=clamp(o.alpha,0,1);g.font=(o.weight||700)+' '+sz+'px "Atkinson Hyperlegible",system-ui,sans-serif';
     g.textAlign=o.align||'center';g.textBaseline='middle';g.lineJoin='round';
     g.lineWidth=Math.max(2.8/K,sz*0.26);g.strokeStyle='rgba(20,12,6,.85)';
-    g.strokeText(s,x,y);g.fillStyle=o.col||'#ffffff';g.fillText(s,x,y);g.restore()}
+    if(o.stroke!==false)g.strokeText(s,x,y);g.fillStyle=o.col||'#ffffff';g.fillText(s,x,y);g.restore()}
   TXQ.length=0;
 }
 
@@ -2179,15 +2194,15 @@ const SEASON_LEN=720;
 const seasonMul=f=>((SEASONS[S.season|0]||{}).mul||{})[f.id]||1;
 const specialMap=()=>!!(M&&M.def&&(M.def.cave||M.def.river||M.def.fjall));
 function setSeason(n,quiet){
-  n=((n%4)+4)%4;const was=!!S.winter;S.season=n;S.seasonT=0;S.winter=n===3;
-  if(was!==S.winter){if(mode==='fish')exitFish();B.wake=[];SCHOOLMEM.length=0}
+  n=((n%4)+4)%4;const was=!!S.winter;if(n===0&&(S.season|0)===3)S.year=(S.year||1)+1;S.season=n;S.seasonT=0;S.sday=0;S.winter=n===3;
+  if(was!==S.winter){if(mode==='fish')exitFish();B.wake=[];SCHOOLMEM.length=0;if(mode==='cabin'&&typeof CAB_FG2!=='undefined')CAB_FG2=null}
   save();updateAction();setWhere();if(!quiet){toast(SEASONS[n].start);fadeSnap(2.6)}
 }
 const FADE={c:null,a:0,d:1,lt:0};
 function fadeSnap(d){try{const c=FADE.c||(FADE.c=document.createElement('canvas'));c.width=cv.width;c.height=cv.height;c.getContext('2d').drawImage(cv,0,0);FADE.a=1;FADE.d=d||2;FADE.lt=performance.now()}catch(e){}}
 function seasonTick(dt){
   S.seasonT=(S.seasonT||0)+dt;
-  if(S.seasonT>=SEASON_LEN&&mode==='sail'&&!specialMap()&&!sheetOpen&&!COMP)setSeason((S.season|0)+1);
+  if((S.sday|0)>=SEASON_DAYS&&(mode==='sail'||mode==='cabin')&&!specialMap()&&!sheetOpen&&!COMP)setSeason((S.season|0)+1);
 }
 function sailUpdate(dt,t){
   const sp=vehSpd()*THR[S.thr==null?2:S.thr].k;
@@ -2570,7 +2585,7 @@ function sailDraw(t){
   if(M.id==='stor'){dyn.push({y:BRIDGE.y+BRIDGE.w+14,fn:()=>drawBridge(g,t,WIN,na)});const fb=footBridge();dyn.push({y:fb.y+fb.w+14,fn:()=>drawFootBridge(g,t,WIN,na)})}
   if(M.cabin&&S.cabin)cabinSmoke(dyn,g,t);
   if(TR.obj){const o=TR.obj;dyn.push({y:o.y,fn:()=>{const p=proj(o.x,o.y);if(p&&p.x>-20&&p.x<W+20&&p.y<H+20)drawTreasure(g,p.x,p.y,p.s,o,t,WIN)}})}
-  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);boardDyn(dyn,g,t,WIN);farmDyn(dyn,g,t,WIN);
+  if(!inCaveMap())zooDyn(dyn,g,t,sq,WIN);if(M.id==='nak')qDyn(dyn,g,t,sq,WIN);npcDyn(dyn,g,t);boardDyn(dyn,g,t,WIN);farmDyn(dyn,g,t,WIN);holDyn(dyn,g,t,WIN);
   if(M.chest)dyn.push({y:M.chest.ly,fn:()=>{const p=proj(M.chest.lx,M.chest.ly);if(p)drawChestMap(g,p.x,p.y,p.s,t,QS().st>=4)}});
   dyn.sort((a,b)=>a.y-b.y);let di=0;
   const r0=Math.max(0,Math.floor((V.camY-DBILL*(V.D||D0)/D0+PAD)/2)),r1=Math.floor((V.camY-6+PAD)/2);
@@ -4047,6 +4062,8 @@ function placeTrophy(p){
 function trophyAt(p){const T2=S.trophies||[];for(let i=T2.length-1;i>=0;i--){const t=T2[i],w=plaqueW(t);if(Math.abs(p.x-t.x)<w/2+2&&Math.abs(p.y-t.y)<plaqueH(t)/2+2)return i}return -1}
 function cabinPress(p){
   if(!CAB.place&&stovePress(p))return;
+  if(!CAB.place&&calHit(p)){showCalendar();return}
+  if(!CAB.place&&treeHit(p)){treePress();return}
   if(!CAB.place&&p.x>AQ.x-4&&p.x<AQ.x+AQ.w+4&&p.y>AQ.y-3&&p.y<AQ.y+AQ.h+22){showAquarium();return}
   if(CAB.place){if(p.y>WALL.y0&&p.y<WALL.y1){placeTrophy(p)}else toast('Tryck på väggen');return}
   const i=trophyAt(p);if(i>=0){CAB.drag={i:i,dx:p.x-S.trophies[i].x,dy:p.y-S.trophies[i].y,sx:p.x,sy:p.y};CAB.moved=false;CAB.sel=i}
@@ -4329,8 +4346,8 @@ function cabinDraw(t){
 
   /* troféer */
   (S.trophies||[]).forEach((tr,i)=>{const w=plaqueW(tr),h=plaqueH(tr);tr.x=clamp(tr.x,WALL.x0+w/2,WALL.x1-w/2);tr.y=clamp(tr.y,WALL.y0+h/2,WALL.y1-h/2);drawPlaque(g,t,tr,i===CAB.sel&&CAB.drag&&CAB.moved)});
-  g.drawImage(cabinFG2(),0,0,W,H);drawAquarium(g,t);const fl=drawFireplace(g,t);drawWoodStove(g,t);drawLantern(g,t);
-  drawHearthCat(g,t);
+  g.drawImage(cabinFG2(),0,0,W,H);drawAquarium(g,t);const fl=drawFireplace(g,t);drawWoodStove(g,t);drawLantern(g,t);drawCalendar(g,t);
+  drawHearthCat(g,t);drawXmasTree(g,t);
   if(CAB.place){g.fillStyle='rgba(255,224,138,.12)';g.fillRect(WALL.x0,WALL.y0,WALL.x1-WALL.x0,WALL.y1-WALL.y0);txt('Tryck där fisken ska hänga',W/2,WALL.y0-12+20,{size:7.5,col:'#ffe08a'})}
   /* eldsken och värme */
   g.save();g.globalCompositeOperation='lighter';
@@ -4492,7 +4509,7 @@ function showSaveSheet(){
   r2.appendChild(ld);n.appendChild(r2);
   openSheet(n);
 }
-function freshSave(){const d=defaultS();d.fixTroll=1;d.music=S.music;d.sfx=S.sfx;return d}
+function freshSave(){const d=defaultS();d.fixTroll=1;d.dayTot=1;d.music=S.music;d.sfx=S.sfx;return d}
 function showResetSheet(){
   const n=el('div');n.appendChild(el('h2',null,'Börja om?'));
   n.appendChild(el('p',null,'Alla pengar, uppgraderingar och loggbok raderas.'));
@@ -4823,7 +4840,7 @@ function deliverOrder(o){
 }
 
 function sellAll(){
-  const sum=Math.round(S.hold.reduce((a,b)=>a+b.price,0)*buffV('price'));
+  const sum=Math.round(S.hold.reduce((a,b)=>a+salePrice(b),0)*buffV('price'));
   if(!S.hold.length)return;
   S.money+=sum;S.stats.earned+=sum;S.hold=[];const ach=checkAch();save();updateHUD();SND.coin();showHarbor();toast('Sålde fångsten för '+kr(sum));if(ach.length)setTimeout(()=>achToast(ach),1800);
 }
@@ -4871,9 +4888,10 @@ function harborSell(n){
   n.appendChild(el('h3',null,'Lastrum '+S.hold.length+'/'+cap()));
   if(!S.hold.length){n.appendChild(el('p','sub','Tomt. Behåll fisk du fångar för att kunna sälja den här.'));return}
   const ul=el('ul','list');
-  S.hold.forEach(h=>ul.appendChild(el('li',null,'<span>'+(h.gold?'<span class="goldtxt">'+gname(FBY[h.id],true)+'</span>':FBY[h.id].name)+' · '+kgTxt(h.kg)+'</span><span>'+kr(h.price)+'</span>')));
+  S.hold.forEach(h=>ul.appendChild(el('li',null,'<span>'+(h.gold?'<span class="goldtxt">'+gname(FBY[h.id],true)+'</span>':FBY[h.id].name)+' · '+kgTxt(h.kg)+'</span><span>'+kr(salePrice(h))+'</span>')));
   n.appendChild(ul);
-  n.appendChild(btn('Sälj allt för '+kr(S.hold.reduce((a,b)=>a+b.price,0)),'gold',sellAll));
+  {const h=holToday();if(h&&(h.pm||h.pall))n.appendChild(el('p','sub hol-note',h.n+': '+h.txt.replace(/^[^.]*\. /,'')))}
+  n.appendChild(btn('Sälj allt för '+kr(S.hold.reduce((a,b)=>a+salePrice(b),0)),'gold',sellAll));
 }
 function harborOrders(n){
   ensureOrders();save();
@@ -6107,7 +6125,7 @@ const VED_MAX=24;
 const VED_PACKS=[{n:'Vedsäck',c:3,p:90,d:'Tre vedträn. Räcker till en vanlig rätt eller en av de starkare rätterna.'},{n:'Vedkasse',c:12,p:300,d:'Tolv vedträn, billigare per styck. Räcker till ungefär fem rätter.'}];
 function buffOn(){const b=S.buff;return b&&RECBY[b.id]&&tt<b.until?b:null}
 function buffV(kind){const b=buffOn();if(!b)return 1;const r=RECBY[b.id];if(r.buff!==kind)return 1;return r.v}
-function buffBite(){return buffV('bite')*((S.winter||nightAmt(dayU(tt))>.5)?buffV('night'):1)}
+function buffBite(){return buffV('bite')*((S.winter||nightAmt(dayU(tt))>.5)?buffV('night'):1)*holBite()}
 function recKnown(r){if(r.mix)return true;if(r.small)return SMALLF.some(id=>S.log[id]);return r.need.some(id=>S.log[id])}
 /* vilka fiskar ur lastrummet som går åt: alltid de billigaste som passar */
 function recPick(r){
@@ -6288,8 +6306,147 @@ function farmDay(){
   });
   if(F0.news.length>8)F0.news=F0.news.slice(-8);
 }
+/* ---------- Kalendern och högtiderna ---------- */
+/* varje årstid är tre dagar, och en ny dag börjar klockan 06:00 */
+const SEASON_DAYS=3;
+const HOLIDAYS=[
+ {s:0,d:2,id:'valborg',n:'Valborg',txt:'Brasan tänds vid hamnen och hela bygden är ute. Fisken nappar oftare hela dagen.',bite:1.3},
+ {s:1,d:1,id:'midsommar',n:'Midsommar',txt:'Midsommarstången står vid hamnen. Fiskhandlaren betalar dubbelt för sik, röding och öring till midsommarborden.',pm:{sik:2,roding:2,oring:2}},
+ {s:2,d:2,id:'marknad',n:'Höstmarknad',txt:'Marknad i hamnen. Fiskhandlaren betalar 30 % mer för all fisk.',pall:1.3},
+ {s:3,d:1,id:'jul',n:'Julafton',txt:'Julgran i stugan och en julklapp under granen. Fiskhandlaren betalar dubbelt för lax och lake till julbordet.',pm:{lax:2,lake:2}}];
+const SEAS_SHORT=['VÅR','SOMMAR','HÖST','VINTER'],SEAS_NAME=['Vår','Sommar','Höst','Vinter'],SEAS_COL=['#6fae4c','#e0b43c','#c8662c','#6f9cc4'];
+const calDay=()=>Math.min(SEASON_DAYS-1,S.sday|0);
+function holAt(s,d){return HOLIDAYS.find(h=>h.s===s&&h.d===d)||null}
+function holToday(){return holAt(S.season|0,calDay())}
+function holBite(){const h=holToday();return h&&h.bite||1}
+function holPM(id){const h=holToday();if(!h)return 1;return (h.pall||1)*((h.pm&&h.pm[id])||1)}
+const salePrice=h=>Math.round(h.price*holPM(h.id));
+/* nästa högtid räknat från i dag: [högtid, antal dagar dit] */
+function holNext(){let s=S.season|0,d=calDay();for(let k=1;k<=SEASON_DAYS*4;k++){d++;if(d>=SEASON_DAYS){d=0;s=(s+1)%4}const h=holAt(s,d);if(h)return [h,k]}return null}
+function calTick(){
+  if(S.sday==null)S.sday=Math.min(SEASON_DAYS-1,Math.floor((S.seasonT||0)/DAY));
+  const d=dayIdx();
+  /* antal dagar man har spelat totalt; gamla sparfiler börjar på klockans dagräkning */
+  if(S.dayTot==null)S.dayTot=d+1;
+  if(S.calDI==null||d<S.calDI){S.calDI=d;return}
+  if(d===S.calDI)return;
+  S.sday=(S.sday|0)+(d-S.calDI);S.dayTot+=d-S.calDI;S.calDI=d;save();
+  const h=holToday();
+  if(h)toast('Idag är det '+h.n+'! '+h.txt);
+  else{const nx=holNext();if(nx&&nx[1]===1&&S.sday<SEASON_DAYS)toast('I morgon är det '+nx[0].n+'.')}
+}
+function showCalendar(){
+  const n=el('div','calsheet');n.appendChild(el('h2',null,'Kalendern'));
+  const s0=S.season|0,d0=calDay(),h0=holToday();
+  n.appendChild(el('p','sub','Dag '+(S.dayTot||1)+' · '+SEAS_NAME[s0]+', år '+(S.year||1)+'.'+(h0?' I dag är det <b>'+h0.n+'</b>!':'')));
+  const g=el('div','cal');
+  SEASONS.forEach((se,si)=>{
+    const lb=el('div','cs',SEAS_NAME[si]);lb.style.color=SEAS_COL[si];g.appendChild(lb);
+    for(let di=0;di<SEASON_DAYS;di++){const h=holAt(si,di),c=el('div','cd'+(si===s0&&di===d0?' now':'')+(h?' hol':'')+((si<s0||(si===s0&&di<d0))?' past':''));
+      c.appendChild(el('span','cn','Dag '+(di+1)));if(h)c.appendChild(el('span','ch',h.n));g.appendChild(c)}});
+  n.appendChild(g);
+  const nx=holNext();
+  if(!h0&&nx)n.appendChild(el('p','sub','Nästa högtid: <b>'+nx[0].n+'</b> '+(nx[1]===1?'i morgon':'om '+nx[1]+' dagar')+'.'));
+  const row=el('div','actions');row.appendChild(btn('Stäng','main',closeSheet));n.appendChild(row);openSheet(n);
+}
+/* kalendern på väggen i stugan */
+const CALW={x:138,y:136,w:28,h:36};
+function drawCalendar(g,t){
+  const c=CALW,s=S.season|0,d=calDay(),h=holToday(),nx=holNext();
+  g.strokeStyle='#2a1a10';g.lineWidth=.6;g.beginPath();g.moveTo(c.x+c.w/2,c.y-6);g.lineTo(c.x+4,c.y+1);g.moveTo(c.x+c.w/2,c.y-6);g.lineTo(c.x+c.w-4,c.y+1);g.stroke();
+  g.fillStyle='#3a2410';g.beginPath();g.arc(c.x+c.w/2,c.y-6,1.2,0,7);g.fill();
+  g.fillStyle='rgba(30,12,4,.35)';g.fillRect(c.x+1.5,c.y+1.5,c.w,c.h);
+  g.fillStyle='#f4ead2';g.fillRect(c.x,c.y,c.w,c.h);
+  g.fillStyle=SEAS_COL[s];g.fillRect(c.x,c.y,c.w,9);
+  g.fillStyle='rgba(0,0,0,.12)';g.fillRect(c.x,c.y+8,c.w,1);
+  txt(SEAS_SHORT[s],c.x+c.w/2,c.y+4.8,{size:5,col:'#fff8e6'});
+  txt(String(d+1),c.x+c.w/2,c.y+19.5,{size:15,weight:800,col:'#2a1608',stroke:false});
+  txt('DAG',c.x+c.w/2,c.y+29,{size:5,weight:800,col:'#6a4a2a',stroke:false});
+  for(let k=0;k<SEASON_DAYS;k++){g.fillStyle=k===d?'#b8392a':k<d?'#bfae8e':'#e2d5b8';g.fillRect(c.x+6+k*6,c.y+c.h-4,4,2)}
+  if(h||(nx&&nx[1]===1)){const pu=.6+.4*Math.sin(t*4);g.fillStyle=h?'rgba(200,50,40,'+pu.toFixed(2)+')':'rgba(200,140,40,'+pu.toFixed(2)+')';
+    g.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?1.6:3.6;g.lineTo(c.x+c.w-4+Math.cos(a)*r,c.y+13+Math.sin(a)*r)}g.closePath();g.fill()}
+}
+const calHit=p=>p.x>CALW.x-3&&p.x<CALW.x+CALW.w+3&&p.y>CALW.y-8&&p.y<CALW.y+CALW.h+3;
+/* julgranen står i stugan hela vintern, och paketet ligger under den från julafton */
+const TREE={x:158,y:296};
+const giftOn=()=>(S.season|0)===3&&calDay()>=1&&S.giftY!==(S.year||1);
+function drawXmasTree(g,t){
+  if((S.season|0)!==3)return;
+  const x=TREE.x,y=TREE.y;
+  g.fillStyle='rgba(20,8,0,.4)';g.beginPath();g.ellipse(x,y+1,15,3.5,0,0,7);g.fill();
+  g.fillStyle='#6a3c1c';g.fillRect(x-6,y-7,12,7);g.fillStyle='#8a5428';g.fillRect(x-6,y-7,12,1.4);
+  g.fillStyle='#4a2a14';g.fillRect(x-1.5,y-11,3,5);
+  [[0,14,'#1f5a32'],[10,12,'#24683a'],[19,9.5,'#2a7642'],[27,7,'#31844a']].forEach(l=>{g.fillStyle=l[2];g.beginPath();g.moveTo(x-l[1],y-10-l[0]);g.lineTo(x+l[1],y-10-l[0]);g.lineTo(x,y-10-l[0]-15);g.closePath();g.fill()});
+  const cols=['#ffd45a','#ff6a5a','#7ad0ff','#ffffff'];
+  for(let k=0;k<14;k++){const hy=y-14-((k*7.3)%34),w=(1-(y-14-hy)/40)*12,hx=x+(hash2(k,4)-.5)*w*1.6,on=Math.sin(t*3+k*1.7)>-.2;
+    g.fillStyle=on?cols[k%4]:'rgba(60,40,20,.6)';g.fillRect(hx-.7,hy-.7,1.4,1.4)}
+  g.fillStyle='#ffd45a';g.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?1.4:3.4;g.lineTo(x+Math.cos(a)*r,y-53+Math.sin(a)*r)}g.closePath();g.fill();
+  if(giftOn()){const gx=x+9,gy=y-1,b=Math.sin(t*3)*.4;
+    g.fillStyle='#b8392a';g.fillRect(gx-5,gy-8+b,10,8);g.fillStyle='#d0503a';g.fillRect(gx-5,gy-8+b,10,1.2);
+    g.fillStyle='#f2c75c';g.fillRect(gx-.8,gy-8+b,1.6,8);g.fillRect(gx-5,gy-4.8+b,10,1.4);
+    g.beginPath();g.ellipse(gx-2,gy-9+b,2,1.2,-.4,0,7);g.ellipse(gx+2,gy-9+b,2,1.2,.4,0,7);g.fill()}
+}
+const treeHit=p=>(S.season|0)===3&&Math.abs(p.x-TREE.x)<17&&p.y>TREE.y-66&&p.y<TREE.y+4;
+/* julkort från faster Birgitta, ett nytt varje år */
+const XMAS_CARDS=[
+ '"God jul, min fiskare! Jag hör att stugan står varm igen. Erik hade varit stolt. Köp något fint till båten."',
+ '"Glad jul! Här är en slant till nya drag. Och skicka gärna en gravad lax söderut, jag har inte glömt hur Erik gjorde den."',
+ '"God jul och gott nytt år! Kom ihåg att klä dig varmt på isen. Ingen fisk är värd blöta ullsockor."',
+ '"Hej min vän! Snön ligger hög här också. Jag lägger i lite pengar, så har du något att elda för. God jul!"',
+ '"God jul! Din pappa och Erik satt alltid på bryggan och ljög om sina fångster. Jag tror du slår dem båda."',
+ '"Glad jul från din faster! Jag har stickat i tankarna, men pengar passar nog bättre i en fiskestuga."',
+ '"God jul! Det sägs att odjuret syns bäst i juletid. Ha kameran redo, och skicka en bild till mig."',
+ '"En riktigt god jul! Ät lutfisk om du måste, men jag vet att du hellre tar lax. Lycka till på sjön!"',
+ '"God jul, kära du! Grannarna i byn säger att det är du som har de största gäddorna nu. Det värmer mitt hjärta."',
+ '"Glad jul! Jag hittade en gammal bild på dig och Erik på bryggan, du med en abborre nästan lika stor som du själv. Den har fått en plats på mitt kylskåp."'];
+function openGift(){
+  S.giftY=S.year||1;const kr0=800+Math.floor(Math.random()*13)*100;S.money+=kr0;
+  let ci;do{ci=Math.floor(Math.random()*XMAS_CARDS.length)}while(XMAS_CARDS.length>1&&ci===S.giftCard);S.giftCard=ci;
+  save();updateHUD();SND.coin();
+  const n=el('div','story');n.appendChild(el('h2',null,'God jul!'));
+  n.appendChild(el('p','story-p','Under granen ligger ett kuvert med ett julkort från faster Birgitta, och det är pengar i.'));
+  n.appendChild(el('p','story-note',XMAS_CARDS[ci].replace(/"$/,' Kram, faster Birgitta."')));
+  n.appendChild(el('p','sub','Du fick '+kr(kr0)+'.'));
+  const row=el('div','actions');row.appendChild(btn('Tack, faster!','main',closeSheet));n.appendChild(row);openSheet(n);
+}
+function treePress(){if(giftOn())openGift();else toast('God jul!')}
+/* pynt vid hamnen på högtiden */
+function holSpot(){
+  if(M.id!=='stor'||!M.dock)return null;if(M.hsp!==undefined)return M.hsp;
+  const d=M.dock;let best=null;
+  /* helst lite närmare kameran än hamnens bodar, så pyntet syns */
+  for(let r=30;r<=46&&!best;r+=2)for(const a of [.35,.15,.55,0,.75,-.2,.95,1.2]){const x=d.x+Math.cos(a)*r,y=d.y+Math.sin(a)*r;if(M.isLand(x,y)&&M.isLand(x+5,y)&&M.isLand(x-5,y)&&M.isLand(x,y-5)){best={x:x,y:y};break}}
+  /* glesa ut träden där pyntet står så det syns */
+  if(best&&M.rows)M.rows.forEach((r,i)=>{if(r)M.rows[i]=r.filter(o=>!((o.k==='spruce'||o.k==='birch')&&Math.hypot(o.x-best.x,o.y-best.y)<13))});
+  return M.hsp=best;
+}
+function holDyn(dyn,g,t,WIN){
+  const sp=holSpot(),h=holToday();if(!h||!sp)return;
+  dyn.push({y:sp.y,fn:()=>{const p=proj(sp.x,sp.y);if(!p)return;const u=p.s*1.1,x=p.x,y=p.y;
+    if(h.id==='valborg'){
+      g.fillStyle='#3a2410';[-1,1].forEach(k=>{g.save();g.translate(x,y);g.rotate(k*.5);g.fillRect(-u*4,-u*.6,u*8,u*1.2);g.restore()});
+      g.fillStyle='#4a2a14';g.beginPath();g.moveTo(x-u*4,y);g.lineTo(x,y-u*6);g.lineTo(x+u*4,y);g.closePath();g.fill();
+      [[0,'#ff7a1a',1],[-1.4,'#ffb43a',.75],[1.4,'#ffb43a',.7],[0,'#ffe68a',.5]].forEach((q,k)=>{const fl=1+.18*Math.sin(t*9+k*2.3),fw=u*2.6*q[2],fh=u*9*q[2]*fl,fx=x+q[0]*u+Math.sin(t*6+k)*u*.3,fy=y-u*1.5;
+        g.fillStyle=q[1];g.beginPath();g.moveTo(fx-fw,fy);g.quadraticCurveTo(fx-fw,fy-fh*.55,fx,fy-fh);g.quadraticCurveTo(fx+fw,fy-fh*.55,fx+fw,fy);g.quadraticCurveTo(fx,fy+fw*.6,fx-fw,fy);g.fill()});
+      g.save();g.globalCompositeOperation='lighter';const gl=g.createRadialGradient(x,y-u*3,1,x,y-u*3,u*16);gl.addColorStop(0,'rgba(255,150,60,.35)');gl.addColorStop(1,'rgba(255,120,40,0)');g.fillStyle=gl;g.fillRect(x-u*16,y-u*19,u*32,u*32);g.restore()}
+    else if(h.id==='midsommar'){
+      g.strokeStyle='#5a3418';g.lineWidth=Math.max(.4,u*.5);g.beginPath();g.moveTo(x,y);g.lineTo(x,y-u*16);g.moveTo(x-u*4,y-u*12);g.lineTo(x+u*4,y-u*12);g.stroke();
+      g.strokeStyle='#6cc04a';g.lineWidth=Math.max(.6,u*1.1);g.beginPath();g.moveTo(x,y-u*16);g.lineTo(x,y-u*3);g.stroke();
+      [-1,1].forEach(k=>{g.beginPath();g.arc(x+k*u*4,y-u*9.5,u*2.4,0,7);g.stroke()});g.fillStyle='#6cc04a';g.beginPath();g.arc(x,y-u*16.5,u*1.2,0,7);g.fill();
+      ['#ffd45a','#ff7aa0','#7ad0ff','#ffffff'].forEach((c,i)=>{g.fillStyle=c;[[-4,-7.2],[4,-7.4],[0,-10],[0,-14],[-1,-5]].forEach((q,j)=>{if((i+j)%4)return;g.beginPath();g.arc(x+q[0]*u+i*.3,y+q[1]*u,Math.max(.4,u*.5),0,7);g.fill()})})}
+    else if(h.id==='marknad'){
+      [[-6,'#c8402c'],[6,'#2f6fae']].forEach(q=>{const tx=x+q[0]*u;g.fillStyle='#e8dcc0';g.fillRect(tx-u*4,y-u*5,u*8,u*5);
+        for(let k=0;k<4;k++){g.fillStyle=k%2?'#f4ead2':q[1];g.beginPath();g.moveTo(tx-u*5+k*u*2.5,y-u*5);g.lineTo(tx-u*5+(k+1)*u*2.5,y-u*5);g.lineTo(tx,y-u*9);g.closePath();g.fill()}
+        g.fillStyle='#3a2410';g.fillRect(tx-u*1.2,y-u*3,u*2.4,u*3)})}
+    else if(h.id==='jul'){
+      [[0,6,'#1f5a32'],[4,4.6,'#24683a'],[8,3.2,'#2a7642']].forEach(l=>{g.fillStyle=l[2];g.beginPath();g.moveTo(x-l[1]*u,y-u*(1+l[0]));g.lineTo(x+l[1]*u,y-u*(1+l[0]));g.lineTo(x,y-u*(7+l[0]));g.closePath();g.fill()});
+      for(let k=0;k<8;k++){const on=Math.sin(t*3+k*1.9)>-.1;g.fillStyle=on?['#ffd45a','#ff6a5a','#7ad0ff'][k%3]:'rgba(40,30,20,.6)';g.fillRect(x+(hash2(k,9)-.5)*u*7,y-u*(2+(k*1.3)%11),Math.max(.6,u*.6),Math.max(.6,u*.6))}
+      g.fillStyle='#ffd45a';g.beginPath();g.arc(x,y-u*15.4,Math.max(.6,u*.9),0,7);g.fill()}
+  }});
+}
 function homeTick(){
   if(mode==='menu')return;
+  calTick();
   const F0=farmS(),d=dayIdx();
   if(F0.day<0||F0.day>d){F0.day=d;return}
   let n=0;while(F0.day<d&&n<6){F0.day++;n++;farmDay()}
@@ -6299,7 +6456,7 @@ function homeTick(){
   if(S.cabinStory&&mode==='sail'&&!sheetOpen){S.cabinStory=0;save();setTimeout(()=>introStory(()=>toast('Morfars stuga ligger vid Storsjöns sydvästra strand. Där kan du laga mat, och senare starta en fiskodling.')),600)}
 }
 /* bara fisk som fötts i odlingen säljs som odlad till restaurangpris. Vild fisk man släppt i ger vanligt pris. */
-const farmPrice=(f,kg,o)=>Math.round(priceFor(f,kg)*(o&&o.wild?1:FARM_PM)*buffV('price'));
+const farmPrice=(f,kg,o)=>Math.round(priceFor(f,kg)*(o&&o.wild?1:FARM_PM)*buffV('price')*holPM(f.id));
 /* sälj: 'keep' = alla vuxna utom de två största (avelsparet), 'all' = töm hela kassen */
 function farmSellList(pen,mode){const f=FBY[pen.sp],fish=pen.fish||[];
   if(mode==='all')return fish.slice();
@@ -6684,7 +6841,7 @@ function frame(now){
   if(!sheetOpen){
     tt+=dt;
     if(mode==='sail')sailUpdate(dt,tt);else if(mode==='fish'){fishUpdate(dt,tt);hotUpdate(dt)}
-    if(mode==='sail'||mode==='fish')seasonTick(dt);
+    if(mode==='sail'||mode==='fish'||mode==='cabin')seasonTick(dt);
     if(COMP)compTick(dt);
     if(mode!=='menu')wxUpdate(dt);
     whereT-=dt;if(whereT<=0){whereT=1.5;if(mode!=='menu')setWhere()}
