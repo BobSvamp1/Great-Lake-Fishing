@@ -1178,6 +1178,8 @@ function migrateV6(){
   if(!Array.isArray(S.boats))S.boats=[0,1,2,3].map(i=>i<=(S.boat|0)?1:0);
   while(S.boats.length<6)S.boats.push(0);
   S.boats[0]=1;S.boats[S.boat|0]=1;
+  /* engångsfix: trollingbåten delades ut av misstag vid laddning, alla får köpa den på nytt */
+  if(!S.fixTroll){S.fixTroll=1;if(S.boats[3]){S.boats[3]=0;if(S.boat===3)S.boat=S.boats[2]?2:S.boats[1]?1:0;S.trollMsg=1}}
   if(!Array.isArray(S.sleds)){S.sleds=[1,S.boat>=1?1:0,S.boat>=3?1:0];S.sled=S.boat>=3?2:S.boat>=1?1:0}
   try{sledClamp()}catch(e){}
   S.sleds[0]=1;if(S.sled==null||!S.sleds[S.sled])S.sled=0;
@@ -4490,7 +4492,7 @@ function showSaveSheet(){
   r2.appendChild(ld);n.appendChild(r2);
   openSheet(n);
 }
-function freshSave(){const d=defaultS();d.music=S.music;d.sfx=S.sfx;return d}
+function freshSave(){const d=defaultS();d.fixTroll=1;d.music=S.music;d.sfx=S.sfx;return d}
 function showResetSheet(){
   const n=el('div');n.appendChild(el('h2',null,'Börja om?'));
   n.appendChild(el('p',null,'Alla pengar, uppgraderingar och loggbok raderas.'));
@@ -5846,6 +5848,7 @@ function startGame(){
   mode='sail';setMood('sail');updateHUD();updateAction();setWhere();fit();setTimeout(lakeTitle,350);
   if(!S.played){S.played=1;S.cabinStory=0;save();if(M.cabin){placeAt(M.cabin);window.__intro=1;enterCabin();window.__intro=0}setTimeout(()=>introStory(()=>toast('Klicka på Gå ut när du är redo att börja fiska.')),500)}
   if(S.depthRefundMsg){const r2=S.depthRefundMsg;S.depthRefundMsg=0;save();setTimeout(()=>toast('Djupkorten finns inte längre, ekolodet visar djupet nu. Du fick tillbaka '+kr(r2)+'.'),1600)}
+  if(S.trollMsg){S.trollMsg=0;save();setTimeout(()=>toast('Trollingbåten hade låsts upp av ett fel i spelet och har tagits bort. Du kan köpa den på Varvet.'),1400)}
   if(S.mapRefundMsg){const r=S.mapRefundMsg;S.mapRefundMsg=0;save();setTimeout(()=>toast('Fiskekartorna finns inte längre. Du fick tillbaka '+kr(r)+'.'),800)}
 }
 $('mPlay').addEventListener('click',startGame);
