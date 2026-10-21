@@ -5806,7 +5806,7 @@ function showAquarium(){
   const aq=S.aq||{},ids=Object.keys(aq);const n=el('div');n.appendChild(el('h2',null,'Akvariet'));
   n.appendChild(el('p','sub',ids.length?ids.length+' av '+visFish().filter(f=>!f.beast).length+' arter simmar här. När du fångar en art som inte finns i akvariet kan du välja att släppa ner den här i stället för att sälja den.':'Akvariet är tomt. När du fångar en art som inte finns här kan du välja "Till akvariet" i stället för att behålla den.'));
   const grid=el('div','grid');
-  ids.forEach(id=>{const f=FBY[id];if(!f)return;const c=el('div','card');c.appendChild(bigFish(f,84,false,!!aq[id].gold));c.appendChild(el('b',null,f.name));c.appendChild(el('small',null,kgTxt(aq[id].kg)));grid.appendChild(c)});
+  ids.forEach(id=>{const f=FBY[id];if(!f)return;const c=el('div','card');c.appendChild(bigFish(f,84,false,!!aq[id].gold));c.appendChild(el('b',null,f.name));grid.appendChild(c)});
   n.appendChild(grid);const row=el('div','actions');row.appendChild(btn('Stäng','main',closeSheet));n.appendChild(row);openSheet(n);
 }
 let gearShown=null;
