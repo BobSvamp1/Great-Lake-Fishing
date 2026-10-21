@@ -633,6 +633,8 @@ function tr(s){
   if(r===undefined)r=trFrag(s);else r=m[1]+r+m[3];if(TRC.size>6000){TRC.clear();TR_OUT.clear()}TRC.set(s,r);if(r!==s){TR_OUT.add(r);TR_OUT.add(r.trim())}return r;
 }
 function trFrag(s){
+  /* text som redan är engelsk (till exempel ett översatt julkort med en hälsning efter) rörs inte */
+  if(!/[åäöÅÄÖ]/.test(s)&&/\b(the|you|your|and|of|with|it's|you're|I'm|I've)\b/.test(s))return s;
   const isL=c=>!!c&&TR_L.test(c);
   let parts=[[s,0]];let hit=false;
   for(const [sv,en] of I18N_FR){
@@ -6540,7 +6542,7 @@ function openGift(){
   save();updateHUD();SND.coin();
   const n=el('div','story');n.appendChild(el('h2',null,'God jul!'));
   n.appendChild(el('p','story-p','Under granen ligger ett kuvert med ett julkort från faster Birgitta, och det är pengar i.'));
-  n.appendChild(el('p','story-note',XMAS_CARDS[ci].replace(/"$/,' Kram, faster Birgitta."')));
+  n.appendChild(el('p','story-note',tr(XMAS_CARDS[ci]).replace(/"$/,tr(' Kram, faster Birgitta."'))));
   n.appendChild(el('p','sub','Du fick '+kr(kr0)+'.'));
   const row=el('div','actions');row.appendChild(btn('Tack, faster!','main',closeSheet));n.appendChild(row);openSheet(n);
 }
