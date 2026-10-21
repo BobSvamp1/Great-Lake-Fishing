@@ -5915,6 +5915,7 @@ function fishCard(){
   $('fcBest').textContent=best?FBY[best[0]].name+' '+kgTxt(best[1].best):'Ingen än';
 }
 function showStartMenu(){
+  if(typeof CLOUD==='object'&&CLOUD&&CLOUD.user){if(CLOUD.pending)cloudPush(true);boardPush(true)}
   mode='menu';F.state='idle';F.spot=MAPS.stor.spots[0];nearSpot=null;nearDock=false;nearRamp=false;
   document.body.classList.add('inmenu');$('menu').hidden=false;
   $('mPlay').textContent=(S.catches>0||S.money>0)?'Fortsätt':'Spela';
@@ -6007,17 +6008,21 @@ function cloudAsk(o){
     r.appendChild(btn('Börja om','quiet',()=>cloudApply(null)))}
   n.appendChild(r);openSheet(n,true);
 }
+const CLOUD_GAP=120000,BOARD_GAP=300000;
 function cloudPush(now){
   if(!CLOUD.ready||!CLOUD.user||S.cloudUid!==CLOUD.user.uid||CLOUD.syncing)return;
-  CLOUD.pending=true;clearTimeout(CLOUD.t);
-  if(!now){CLOUD.t=setTimeout(()=>cloudPush(true),15000);return}
+  /* gratisplanen i Firebase tål 20 000 skrivningar per dygn, så molnet får en sparning högst varannan minut.
+     När man stänger appen, går till menyn eller trycker på Spara nu skickas den direkt. */
+  CLOUD.pending=true;
+  if(!now){if(CLOUD.t)return;const wait=Math.max(15000,CLOUD_GAP-(Date.now()-(CLOUD.last||0)));CLOUD.t=setTimeout(()=>{CLOUD.t=0;cloudPush(true)},wait);return}
+  clearTimeout(CLOUD.t);CLOUD.t=0;
   CLOUD.pending=false;const u=CLOUD.user;
   cloudDoc().set({data:JSON.stringify(S),savedAt:S.savedAt||Date.now(),money:S.money|0,catches:S.catches|0,name:(u.displayName||u.email||'').slice(0,60)})
     .then(()=>{CLOUD.last=Date.now();CLOUD.err='';acctUI();boardPush()})
     .catch(()=>{CLOUD.err='Kunde inte spara i molnet just nu. Det sparas på enheten och försöker igen.';CLOUD.pending=true;acctUI()});
 }
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&CLOUD.pending)cloudPush(true)});
-window.addEventListener('pagehide',()=>{if(CLOUD.pending)cloudPush(true)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){if(CLOUD.pending)cloudPush(true);boardPush(true)}});
+window.addEventListener('pagehide',()=>{if(CLOUD.pending)cloudPush(true);boardPush(true)});
 const acctName=()=>{const u=CLOUD.user;return u?(u.displayName||u.email||'ditt konto'):''};
 const acctShort=()=>{const u=CLOUD.user;return u?(u.displayName?u.displayName.split(' ')[0]:(u.email||'').split('@')[0]):''};
 function acctUI(){
@@ -6102,12 +6107,16 @@ function lbName(){
   if(S.lbName)return S.lbName;const u=CLOUD&&CLOUD.user;
   return u&&u.displayName?u.displayName.split(' ')[0].slice(0,16):'Fiskare '+(u?u.uid.slice(0,4).toUpperCase():'');
 }
-function boardPush(){
+function boardPush(force){
   if(!CLOUD||!CLOUD.ready||!CLOUD.user||!hasProgress(S))return;
   const b=bestFish(S);
+  const row={name:String(lbName()).slice(0,20),catches:S.catches|0,earned:Math.round((S.stats&&S.stats.earned)||0),bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:''};
+  /* topplistan uppdateras bara när något har ändrats, och högst var femte minut om man inte stänger spelet */
+  const key=JSON.stringify(row)+CLOUD.user.uid;if(key===CLOUD.bKey)return;
+  if(!force&&Date.now()-(CLOUD.bT||0)<BOARD_GAP)return;
+  CLOUD.bKey=key;CLOUD.bT=Date.now();
   /* tiden sätts av Firebase, och reglerna i Firestore nekar siffror som ökar orimligt fort */
-  CLOUD.db.collection('board').doc(CLOUD.user.uid).set({name:String(lbName()).slice(0,20),catches:S.catches|0,earned:Math.round((S.stats&&S.stats.earned)||0),
-    bestKg:b?Math.round(b.kg*100)/100:0,bestF:b?b.id:'',upd:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
+  CLOUD.db.collection('board').doc(CLOUD.user.uid).set(Object.assign(row,{upd:firebase.firestore.FieldValue.serverTimestamp()})).catch(()=>{CLOUD.bKey=''});
 }
 const LB={tab:'catches',cache:{}};
 const LBT=[{id:'catches',n:'Flest fiskar'},{id:'bestKg',n:'Största fisk'},{id:'earned',n:'Pengar tjänat'}];
@@ -6126,7 +6135,7 @@ function showBoard(){
     const ch=el('button','acc-link','Byt namn');ch.type='button';ch.addEventListener('click',()=>{
       const m=el('div');m.appendChild(el('h2',null,'Ditt namn på topplistan'));
       const inp=el('input','acc-in');inp.maxLength=16;inp.value=lbName();inp.setAttribute('aria-label','Namn');m.appendChild(inp);
-      const r=el('div','actions');r.appendChild(btn('Spara','main',()=>{const v=inp.value.replace(/[<>&"]/g,'').trim().slice(0,16);S.lbName=v||'';save();boardPush();LB.cache={};setTimeout(showBoard,500)}));
+      const r=el('div','actions');r.appendChild(btn('Spara','main',()=>{const v=inp.value.replace(/[<>&"]/g,'').trim().slice(0,16);S.lbName=v||'';save();boardPush(true);LB.cache={};setTimeout(showBoard,500)}));
       r.appendChild(btn('Avbryt','quiet',showBoard));m.appendChild(r);openSheet(m)});
     row.appendChild(document.createTextNode(' '));row.appendChild(ch);n.appendChild(row);
   }
@@ -6137,7 +6146,7 @@ function showBoard(){
     docs.forEach((d,i)=>{const li=el('li',d.id===me?'me':'');
       li.innerHTML='<span class="lb-r">'+(i<3?['🥇','🥈','🥉'][i]:(i+1)+'.')+'</span><span class="lb-n">'+String(d.name||'Fiskare').replace(/[<>&]/g,'')+'</span><span class="lb-v">'+lbVal(tab,d)+'</span>';list.appendChild(li)})};
   if(c&&Date.now()-c.t<30000){fill(c.d);return}
-  if(CLOUD.user)boardPush();
+  if(CLOUD.user)boardPush(true);
   CLOUD.db.collection('board').orderBy(tab,'desc').limit(25).get().then(qs=>{const d=[];qs.forEach(x=>d.push(Object.assign({id:x.id},x.data())));LB.cache[tab]={t:Date.now(),d:d};fill(d)})
     .catch(()=>{if(list.isConnected){list.innerHTML='';list.appendChild(el('li','lb-wait','Kunde inte hämta topplistan just nu.'))}});
 }
