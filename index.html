@@ -1286,6 +1286,7 @@ function migrateV6(){
   while(S.boats.length<6)S.boats.push(0);
   S.boats[0]=1;S.boats[S.boat|0]=1;
   /* engångsfix: trollingbåten delades ut av misstag vid laddning, alla får köpa den på nytt */
+  if(!S.hubMig){S.hubMig=1;if(S.played&&((S.catches|0)>0||(S.money|0)>0))S.hubSeen=1}
   if(!S.fixTroll){S.fixTroll=1;if(S.boats[3]){S.boats[3]=0;if(S.boat===3)S.boat=S.boats[2]?2:S.boats[1]?1:0;S.trollMsg=1}}
   if(!Array.isArray(S.sleds)){S.sleds=[1,S.boat>=1?1:0,S.boat>=3?1:0];S.sled=S.boat>=3?2:S.boat>=1?1:0}
   try{sledClamp()}catch(e){}
@@ -2854,13 +2855,27 @@ function drawTreasure(g,x,y,s,o,t,win){
   const sx=x+u*2,sy=y-u*4.2+bob,ss=u*(.6+gl*.8);g.fillRect(sx-ss,sy-u*.12,ss*2,u*.24);g.fillRect(sx-u*.12,sy-ss,u*.24,ss*2);
 }
 function treasureArrow(g,t){
-  if(!TR.obj)return;const p=proj(TR.obj.x,TR.obj.y);
+  if(TR.obj)edgeArrow(g,t,TR.obj.x,TR.obj.y);
+  /* första gången: visa vägen från stugan till Hamnen */
+  if(!S.hubSeen&&mode==='sail'&&M.id==='stor'&&M.dock&&!COMP){
+    const p=proj(M.dock.x,M.dock.y);
+    if(p&&p.x>8&&p.x<W-8&&p.y>8&&p.y<H-8){
+      const s=Math.max(1,p.s),bob=Math.sin(t*4)*3,y0=p.y-9*p.s-14-bob;
+      g.save();g.translate(p.x,y0);g.scale(1.6,1.6);
+      g.fillStyle='rgba(20,12,4,.55)';g.beginPath();g.moveTo(0,7);g.lineTo(-5,-4);g.lineTo(0,-2);g.lineTo(5,-4);g.closePath();g.fill();
+      g.fillStyle='#ffd45a';g.beginPath();g.moveTo(0,6);g.lineTo(-4.2,-3.5);g.lineTo(0,-1.6);g.lineTo(4.2,-3.5);g.closePath();g.fill();
+      g.restore();
+    } else edgeArrow(g,t,M.dock.x,M.dock.y,1.5);
+  }
+}
+function edgeArrow(g,t,tx,ty,sc){
+  const p=proj(tx,ty);
   const on=p&&p.x>8&&p.x<W-8&&p.y>8&&p.y<H-8;if(on)return;
   const bp=proj(B.x,B.y);if(!bp)return;
   /* riktningen räknas i världen: söderut på kartan är nedåt på skärmen */
-  let dx=TR.obj.x-B.x,dy=TR.obj.y-B.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
+  let dx=tx-B.x,dy=ty-B.y;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
   let k=1e9;if(dx)k=Math.min(k,((dx>0?W-14:14)-bp.x)/dx);if(dy)k=Math.min(k,((dy>0?H-14:14)-bp.y)/dy);
-  const ax=bp.x+dx*k,ay=bp.y+dy*k,a=Math.atan2(dy,dx),pul=1+.15*Math.sin(t*6);
+  const ax=bp.x+dx*k,ay=bp.y+dy*k,a=Math.atan2(dy,dx),pul=(sc||1)*(1+.15*Math.sin(t*6));
   g.save();g.translate(ax,ay);g.rotate(a);g.scale(pul,pul);
   g.fillStyle='rgba(20,12,4,.55)';g.beginPath();g.moveTo(7,0);g.lineTo(-4,-5);g.lineTo(-2,0);g.lineTo(-4,5);g.closePath();g.fill();
   g.fillStyle='#ffd45a';g.beginPath();g.moveTo(6,0);g.lineTo(-3.5,-4.2);g.lineTo(-1.6,0);g.lineTo(-3.5,4.2);g.closePath();g.fill();
@@ -4397,7 +4412,9 @@ function showTrophyInfo(i){
 }
 /* --- Ritning av interiören --- */
 let CAB_BG=null;
-const plaqueW=t=>{const f=FBY[t.id];return Math.round((f.beast?70:f.legend?78:34+22*clamp((t.kg-f.kg[0])/(f.kg[1]-f.kg[0]),0,1))*(f.wide?1.15:1))};
+/* tavlans storlek följer fiskens verkliga vikt (logaritmiskt så att en nors syns och en gädda ändå får plats på väggen) */
+const plaqueW=t=>{const f=FBY[t.id];if(f.beast)return 88;if(f.legend)return Math.round(clamp(60+6*Math.log2(t.kg/4),72,84));
+  return Math.round(clamp(16+5.2*Math.log2(Math.max(t.kg,.01)/.01),18,68)*(f.wide?1.04:1))};
 const plaqueH=t=>Math.round(plaqueW(t)*.42)+6;
 const CEIL=56,FLOOR=200,RW=150;
 function cabinBG(){
@@ -4751,6 +4768,10 @@ function openSheet(node,lock){
 function closeSheet(){$('sheet').hidden=true;sheetOpen=false;lockSheet=false;stickySheet=false}
 let stickySheet=false;
 $('sheet').addEventListener('pointerdown',e=>{if(e.target===$('sheet')&&!lockSheet&&!stickySheet)closeSheet()});
+/* ett snabbt tryck på spelplanen som öppnar ett ark ger på mobilen ett "spökklick" direkt efteråt på samma ställe,
+   som annars träffar knappen i arket som just dök upp (t.ex. väljer en fisk eller stänger arket) */
+let ghostT=0;
+document.addEventListener('click',e=>{if(performance.now()-ghostT<500&&e.target.closest&&e.target.closest('#sheet')){e.preventDefault();e.stopPropagation()}},true);
 function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=trHTML(html);return e}
 function btn(label,cls,fn){const b=el('button','btn '+(cls||''),label);b.type='button';if(fn)b.addEventListener('click',fn);return b}
 /* alla arter utom legenderna räknas, även de man inte hittat än */
@@ -4890,7 +4911,7 @@ function showSaveSheet(){
   r2.appendChild(ld);n.appendChild(r2);
   openSheet(n);
 }
-function freshSave(){const d=defaultS();d.fixTroll=1;d.dayTot=1;d.music=S.music;d.sfx=S.sfx;return d}
+function freshSave(){const d=defaultS();d.fixTroll=1;d.hubMig=1;d.dayTot=1;d.music=S.music;d.sfx=S.sfx;return d}
 function showResetSheet(){
   const n=el('div');n.appendChild(el('h2',null,'Börja om?'));
   n.appendChild(el('p',null,'Alla pengar, uppgraderingar och loggbok raderas.'));
@@ -5448,6 +5469,7 @@ function shopArtCopy(kind){
   const src=shopArt[kind],c=document.createElement('canvas');c.width=src.width;c.height=src.height;c.getContext('2d').drawImage(src,0,0);return c;
 }
 function showHarborHub(){
+  if(!S.hubSeen){S.hubSeen=1;save()}
   const n=el('div','hub');
   n.appendChild(el('h2',null,M.dock.name));
   n.appendChild(el('p','sub','Välj butik · Pengar: <b>'+kr(S.money)+'</b>'));
@@ -6579,13 +6601,9 @@ function buffUI(){
   if(b)e.setAttribute('aria-label',RECBY[b.id].n+': '+RECBY[b.id].d);
 }
 /* --- Ritning i stugan --- */
-const STOVE={x:80,y:186,w:34,h:38},WOOD={x:56,y:200,w:20,h:16};
+const STOVE={x:80,y:186,w:34,h:38},WOOD={x:57,y:211,w:20,h:16};
 function drawWoodStove(g,t){
   const x=STOVE.x,y=STOVE.y,w=STOVE.w,yb=y+STOVE.h;
-  /* rökrör */
-  const pt=CB.ceil-7;g.fillStyle='#1e2022';g.fillRect(x+w-10,pt,6,y-pt+4);g.fillStyle='#34373a';g.fillRect(x+w-9,pt,1.4,y-pt+4);
-  g.fillStyle='#2a2d30';g.fillRect(x+w-12,CB.ceil-1,10,3);g.fillStyle='#44484c';g.fillRect(x+w-12,CB.ceil-1,10,.8);
-  g.fillStyle='#2a2d30';g.fillRect(x+w-11,y-8,8,3);
   /* skugga */
   g.fillStyle='rgba(20,8,0,.45)';g.beginPath();g.ellipse(x+w/2,yb+1,w/2+5,4,0,0,7);g.fill();
   /* ben */
@@ -6622,6 +6640,7 @@ function drawWoodStove(g,t){
   if(lit)for(let k=0;k<3;k++){g.fillStyle='rgba(240,240,245,.22)';const pk=(t*.5+k/3)%1;g.beginPath();g.arc((CK.t>0?x+12:x+23)+Math.sin(t+k)*1.5,y-9-pk*14,1.2+pk*2.5,0,7);g.fill()}
   /* vedkorg */
   const wx=WOOD.x,wy=WOOD.y,have=Math.min(6,Math.ceil((S.ved|0)/2));
+  g.fillStyle='rgba(20,8,0,.4)';g.beginPath();g.ellipse(wx+WOOD.w/2+1,wy+WOOD.h,WOOD.w/2+3,2.6,0,0,7);g.fill();
   g.fillStyle='#6a4a2a';g.fillRect(wx,wy+6,WOOD.w,WOOD.h-6);g.fillStyle='#7d5a34';for(let k=0;k<4;k++)g.fillRect(wx+1+k*5,wy+6,1,WOOD.h-6);
   for(let k=0;k<have;k++){const lx=wx+3+(k%3)*5.2,ly=wy+5-Math.floor(k/3)*3.6;g.fillStyle='#8a5c34';g.beginPath();g.ellipse(lx,ly,2.6,2.2,0,0,7);g.fill();g.fillStyle='#c79a5e';g.beginPath();g.ellipse(lx,ly,1.4,1.1,0,0,7);g.fill()}
   return fl;
@@ -6998,8 +7017,9 @@ function holdSteer(dt){if(!down||mode!=='sail'||sheetOpen||!HOLDP||ptrs.size>=2)
 function lpos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}}
 const ptrs=new Map();let pinchD=0;
 const pinchDist=()=>{const a=[...ptrs.values()];return a.length<2?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+cv.addEventListener('touchend',e=>{if(e.cancelable)e.preventDefault()},{passive:false});
 cv.addEventListener('pointerdown',e=>{
-  e.preventDefault();if(sheetOpen||mode==='menu')return;
+  e.preventDefault();ghostT=performance.now();if(sheetOpen||mode==='menu')return;
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});HOLDP={clientX:e.clientX,clientY:e.clientY};
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
   if(mode==='sail'&&ptrs.size>=2){pinchD=pinchDist();down=false;return}
@@ -7015,6 +7035,7 @@ cv.addEventListener('pointermove',e=>{
   if(down&&mode==='cabin'&&!sheetOpen)cabinMove(lpos(e));
 });
 const upH=e=>{
+  ghostT=performance.now();
   if(e&&e.pointerId!=null)ptrs.delete(e.pointerId);
   if(ptrs.size<2)pinchD=0;
   if(!down)return;down=false;if(mode==='fish')fishRelease();if(mode==='cabin')cabinRelease();if(typeof F!=='undefined')F.drag=false;
