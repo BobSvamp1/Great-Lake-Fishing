@@ -7134,48 +7134,7 @@ window.addEventListener('keydown',e=>{if(e.code==='Space'&&mode==='fish'&&!sheet
 window.addEventListener('keyup',e=>{if(e.code==='Space'&&mode==='fish')fishRelease()});
 
 
-/* ---------- Hemlig testmeny: tryck 7 gånger snabbt på pengarna ---------- */
-(function(){
-  let taps=[];
-  $('moneyChip').addEventListener('click',()=>{
-    const n=Date.now();taps=taps.filter(x=>n-x<4000);taps.push(n);
-    if(taps.length>=7){taps=[];if(!/(^|\.)github\.io$/.test(location.hostname))showModMenu()}
-  });
-})();
-function showModMenu(){
-  const n=el('div');n.appendChild(el('h2',null,'Testmeny'));
-  n.appendChild(el('p','sub','Bara för testning. Ändringarna sparas i ditt spel.'));
-  const rows=el('div','actions');
-  const add=(label,fn,cls)=>rows.appendChild(btn(label,cls||'quiet',()=>{fn();save();updateHUD();updateAction();showModMenu()}));
-  add('+10 000 kr',()=>{S.money+=10000},'gold');
-  add('Tjäna 10 miljoner (trålaren)',()=>{S.stats.earned=(S.stats.earned||0)+10000000;S.money+=3000000},'gold');
-  add('+100 000 kr',()=>{S.money+=100000},'gold');
-  add('Lås upp all utrustning',()=>{S.rod=GEAR.rod.items.length-1;S.boat=GEAR.boat.items.length-1;S.boats=[1,1,1,1,1,1];S.sleds=[1,1,1];S.sonar=GEAR.sonar.items.length-1;
-    RODS.forEach(r=>S.rods[r.id]=1);BAITS.forEach(b=>S.baits[b.id]=1);S.nakten=1;toast('All utrustning upplåst')});
-  add(S.cabin?'Ta bort stugan':'Ge mig stugan',()=>{S.cabin=S.cabin?0:1});
-  add('Lås upp Olof',()=>{S.comp=S.comp||{best:{}};S.comp.hardWin=Math.max(1,S.comp.hardWin||0)});
-  add('Nästa fisk blir gyllene',()=>{MOD.gold=true;toast('Nästa fisk blir gyllene')});
-  add(MOD.legend?'Legend väntar…':'Nästa fisk blir legenden',()=>{MOD.legend=!MOD.legend;toast(MOD.legend?'Nästa fisk vid Gillhov blir Gillhovsöringen, vid Storsjöflaket Storsjöodjuret och i grottan Kristalldraken':'Avstängt')},MOD.legend?'gold':'quiet');
-  add('Fyll lastrummet',()=>{const ids=FISH.filter(f=>!f.beast&&!f.legend).map(f=>f.id);while(S.hold.length<cap()){const f=FBY[ids[Math.floor(Math.random()*ids.length)]],kg=Math.round((f.kg[0]+(f.kg[1]-f.kg[0])*Math.random())*100)/100;S.hold.push({id:f.id,kg:kg,price:priceFor(f,kg),spot:'Testmenyn'})}});
-  add('Skatt nära båten',()=>{if(mode==='sail'){TR.obj=null;TR.next=0;closeSheet()}else toast('Åk ut på sjön först')});
-  add('Spola fram 2 timmar',()=>{tt+=DAY/12});
-  add('Byt årstid',()=>{if(specialMap()){toast('Åk tillbaka till Storsjön eller Näkten först.');return}setSeason((S.season|0)+1)});
-  add('Nils-storyn: nästa steg ('+QS().st+')',()=>{const q=QS();q.st=Math.min(5,q.st+1);if(q.st>=4)S.baits.silver=1;save();toast('Storyn är på steg '+q.st)});
-  add('Lina/Hedda/Ánte: nästa steg',()=>{const q=QV();['lina','hedda','ante'].forEach(k=>q[k]=Math.min(3,(q[k]|0)+1));save();toast('Steg '+JSON.stringify(q))});
-  add('Ge mig älvkanot och fjällskoter',()=>{S.boats[4]=1;S.sleds[2]=1;save();toast('Klart')});
-  add('Nils-storyn: börja om',()=>{S.q={st:0};delete S.baits.silver;if(S.baitSel==='silver')S.baitSel='mask';save();toast('Storyn är nollställd')});
-  n.appendChild(rows);
-  n.appendChild(el('h3',null,'Väder'));
-  n.appendChild(el('p','sub','Byter vädret direkt. Regn, dimma och blåst håller i sig ett par minuter och sedan blir det sol igen.'));
-  const wrow=el('div','actions');
-  [['sun','Sol'],['rain',S.winter?'Snö':'Regn'],['fog','Dimma'],['wind','Blåst']].forEach(w=>{
-    wrow.appendChild(btn(w[1],WX.k===w[0]?'gold':'quiet',()=>{
-      if(w[0]==='sun'){WX.k='sun';WX.a=0;WX.next=rnd(150,300)}else{WX.k=w[0];WX.a=1;WX.dur=120}
-      wxHud();toast('Vädret: '+w[1]);showModMenu()}))});
-  n.appendChild(wrow);
-  const crow=el('div','actions');crow.appendChild(btn('Stäng','main',closeSheet));n.appendChild(crow);
-  openSheet(n);
-}
+
 
 function clearCaches(){}
 function fit(){
