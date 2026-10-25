@@ -3187,7 +3187,7 @@ function swimNatural(s,dt,near,slow){
   if(near&&s.kind==='curious'&&!leaving&&s.ct<s.cmax){
     const T=temperOf(s.p.f),dx=BX-s.x,ad=Math.abs(dx),keep=8+(1-s.bold)*14;
     s.ct+=dt;s.look=true;if(ad>3)s.face=dx>0?1:-1;
-    if(s.lty==null)s.lty=F.dy+rnd(-6,6)*(1.2-s.bold);s.ty=s.lty;
+    if(s.lty==null)s.lty=T.amb?s.y+clamp(F.dy-s.y,-16,16):F.dy+rnd(-8,8)*(1.2-s.bold);s.ty=s.lty;
     s.gt-=dt;
     if(T.amb){tv=ad>T.reach*.8?s.face*s.spd*.12:0}
     else{
@@ -3213,13 +3213,14 @@ function updateSchool(dt){
   const nb=newbie();
   if(F.sp<=0&&F.school.length<(nb>.5?5:(F.spot&&F.spot.river)?4:3)){spawnFish(false);F.sp=(6.5+(1-activity(F.spot,clock))*11)*rnd(0.7,1.3)*(1-.6*nb)*(!S.winter&&S.boat===5?.5:!S.winter&&QUIET[S.boat]?.8:!S.winter&&S.boat===1?1.1:1)*(!S.winter&&!(F.spot&&F.spot.river)?SPAWN_K:1)/buffBite()}
   const hunting=F.state==='waiting',bait=BAITBY[S.baitSel];
-  let biter=null;
+  let biter=null,lookers=0;
+  for(const s of F.school)if(s.look)lookers++;
   for(const s of F.school){
-    const fav=nb>=1||bait.fav.indexOf(s.p.f.id)>=0||s.p.f.beast||s.p.f.legend,dx=s.x-BX,dy=F.dy-s.y,rg=60+30*nb;
+    const fav=(nb>=1||bait.fav.indexOf(s.p.f.id)>=0||s.p.f.beast||s.p.f.legend)&&(s.look||lookers<2||s.p.f.legend||s.p.f.beast),dx=s.x-BX,dy=F.dy-s.y,rg=60+30*nb;
     const lure=fav&&nb>0&&hunting&&Math.abs(dx)<rg&&Math.abs(dy)<rg;
     if(F.spot&&F.spot.river){s.face=s.vx<0?-1:1;s.x+=s.vx*dt*(lure?1-.4*nb:1);s.y+=Math.sin(clock*1.3+s.ph)*5*dt}
     /* bara fiskar som redan simmar på ungefär samma djup blir nyfikna, ingen ändrar djup för att komma till betet */
-    else{const leg=s.p.f.legend||s.p.f.beast;const amb=temperOf(s.p.f).amb;swimNatural(s,dt,fav&&hunting&&(leg||Math.abs(dx)<(nb?rg:amb?95:80)&&Math.abs(dy)<(nb?rg:amb?72:42)),lure?1-.4*nb:1)}
+    else{const leg=s.p.f.legend||s.p.f.beast;const amb=temperOf(s.p.f).amb;swimNatural(s,dt,fav&&hunting&&(leg||Math.abs(dx)<(nb?rg:80)&&Math.abs(dy)<(nb?rg:amb?48:42)),lure?1-.4*nb:1)}
     if(!hunting)continue;
     if(nb>0&&fav&&Math.abs(dx)<rg&&Math.abs(dy)<rg)s.y+=clamp(dy,-1,1)*Math.min(Math.abs(dy),(14+12*nb)*dt);
     /* fiskar som kikar på betet hugger, en strövare som råkar passera kan också hugga ibland, den som bara simmar förbi gör det sällan */
