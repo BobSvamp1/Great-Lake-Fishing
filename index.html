@@ -6695,7 +6695,7 @@ function showBoard(){
   const tab=LB.tab,c=LB.cache[tab];
   const fill=docs=>{if(!list.isConnected)return;list.innerHTML='';
     if(!docs.length){list.appendChild(el('li','lb-wait','Ingen är med än. Bli först!'));return}
-    docs.forEach((d,i)=>{const li=el('li',d.id===me?'me':'');
+    docs.forEach((d,i)=>{const li=el('li',d.id===me?'me':'');if(d.id===me&&!CLOUD.noLv){try{lvInit();d=Object.assign({},d,{lv:S.lv})}catch(e){}}
       li.innerHTML='<span class="lb-r">'+(i<3?['🥇','🥈','🥉'][i]:(i+1)+'.')+'</span><span class="lb-n">'+String(d.name||'Fiskare').replace(/[<>&]/g,'')+(d.lv&&tab!=='lv'?' <span class="lb-lv">'+(LANG==='en'?'Lv ':'Nv ')+(d.lv|0)+'</span>':'')+'</span><span class="lb-v">'+lbVal(tab,d)+'</span>';list.appendChild(li)})};
   /* topplistan hämtas högst var femte minut per flik, så läsningarna i Firebase räcker längre */
   if(c&&Date.now()-c.t<300000){fill(c.d);return}
