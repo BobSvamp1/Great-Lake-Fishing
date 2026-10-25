@@ -1223,6 +1223,9 @@ const LINEBY={};LINES.forEach(l=>LINEBY[l.id]=l);
 const TAFS={p:700,d:'Ståltafs närmast betet. Gädda och mörkerål kan inte bita av linan, men skygg fisk som öring, röding och harr ser den och nappar sämre.'};
 const SHY=['oring','roding','harr','kanada','regnbage','lax'],TEETH=['gadda','morkeral','glodgadda','gruvodjur'];
 const curLine=()=>LINEBY[S.lineSel]||LINES[0];
+/* vissa beten är extra bra för en art: wobblern är gjord för gädda, abborren tar hellre mask */
+const BAITPOW={wobbler:{gadda:1.7,glodgadda:1.5,oring:1.2,lax:1.2,abborre:.55}};
+const baitPow=id=>((BAITPOW[S.baitSel]||{})[id])||1;
 function shyMul(id){if(SHY.indexOf(id)<0)return 1;return curLine().shy*(S.tafsOn?.6:1)}
 /* Hur fisken kämpar. b = rörelse, sp = fart, ev = hur ofta den byter håll, bp = chans till ryck */
 const FIGHT={
@@ -3216,15 +3219,15 @@ function updateSchool(dt){
     const lure=fav&&nb>0&&hunting&&Math.abs(dx)<rg&&Math.abs(dy)<rg;
     if(F.spot&&F.spot.river){s.face=s.vx<0?-1:1;s.x+=s.vx*dt*(lure?1-.4*nb:1);s.y+=Math.sin(clock*1.3+s.ph)*5*dt}
     /* bara fiskar som redan simmar på ungefär samma djup blir nyfikna, ingen ändrar djup för att komma till betet */
-    else{const leg=s.p.f.legend||s.p.f.beast;swimNatural(s,dt,fav&&hunting&&(leg||Math.abs(dx)<(nb?rg:80)&&Math.abs(dy)<(nb?rg:42)),lure?1-.4*nb:1)}
+    else{const leg=s.p.f.legend||s.p.f.beast;const amb=temperOf(s.p.f).amb;swimNatural(s,dt,fav&&hunting&&(leg||Math.abs(dx)<(nb?rg:amb?95:80)&&Math.abs(dy)<(nb?rg:amb?72:42)),lure?1-.4*nb:1)}
     if(!hunting)continue;
     if(nb>0&&fav&&Math.abs(dx)<rg&&Math.abs(dy)<rg)s.y+=clamp(dy,-1,1)*Math.min(Math.abs(dy),(14+12*nb)*dt);
     /* fiskar som kikar på betet hugger, en strövare som råkar passera kan också hugga ibland, den som bara simmar förbi gör det sällan */
     const bm=nb>0||(F.spot&&F.spot.river)||s.kind==null?1:s.look?2.6:s.kind==='roam'?1:.2;
     const close=Math.abs(dx)<(S.sonar<1?24:18)&&Math.abs(s.y-F.dy)<(S.sonar<1?16:11);
     /* en fisk som kikar på betet kan bestämma sig redan på avstånd, en som bara passerar måste vara alldeles intill */
-    const inReach=s.look?Math.abs(dx)<temperOf(s.p.f).reach+6&&Math.abs(s.y-F.dy)<14&&Math.sign(-dx)===s.face:close;
-    if(bm>0&&inReach)s.int+=dt*(fav?1+.4*nb:0.25)*shyMul(s.p.f.id)*buffBite()*bm;
+    const TT=temperOf(s.p.f),inReach=s.look?Math.abs(dx)<TT.reach+6&&Math.abs(s.y-F.dy)<(TT.amb?22:14)&&Math.sign(-dx)===s.face:close;
+    if(bm>0&&inReach)s.int+=dt*(fav?1+.4*nb:0.25)*shyMul(s.p.f.id)*buffBite()*bm*baitPow(s.p.f.id);
     else s.int=Math.max(0,s.int-dt*0.5);
     /* den hugger bara när den faktiskt är vid betet */
     if(!biter&&s.int>=1.4&&inReach)biter=s;
