@@ -2327,13 +2327,13 @@ function fishSpotAt(x,y){
   const sd=shoreDist(x,y),z=zoneAt(x,y,sd),dp=depthAt(z,sd);
   const shallowUnder=z.under==='deep'?'rocks':z.under;
   if(z.under==='cave')return Object.assign({},z,{dep:[0,depthAt(z,sd).m],depthM:depthAt(z,sd).m,dz:depthAt(z,sd).k,hot:false,big:z.big||1});
-  const under=dp.m>=18?'deep':shallowUnder;
-  const theme=sd>105?'open':z.theme;
+  const under=z.under==='mine'?'mine':dp.m>=18?'deep':shallowUnder;
+  const theme=z.under==='mine'?'mine':sd>105?'open':z.theme;
   const hot=hotNear(x,y);
   return Object.assign({},z,{under:under,theme:theme,dep:[0,dp.m],depthM:dp.m,dz:dp.k,hot:!!hot,big:(z.big||1)*(1+.18*dp.k)*(hot?1.25:1)});
 }
 /* Fiskarnas vanor och djupet: grundfisk vid land, djupfisk långt ute */
-function depthMul(f,spot){if(spot.dz==null)return 1;const h=HABIT[f.id];if(!h)return 1;const d=h.d-spot.dz;return Math.max(.12,Math.exp(-(d*d)/.12))}
+function depthMul(f,spot){if(spot.dz==null||spot.under==='mine')return 1;const h=HABIT[f.id];if(!h)return 1;const d=h.d-spot.dz;return Math.max(.12,Math.exp(-(d*d)/.12))}
 /* ---------- Fiskevak: där fisken vakar och måsarna dyker nappar det bättre ---------- */
 const HOT={list:[],map:null,t:0};
 function hotNear(x,y){if(HOT.map!==M)return null;return HOT.list.find(h=>Math.hypot(h.x-x,h.y-y)<30&&h.age>2)||null}
@@ -3163,7 +3163,7 @@ function spawnFish(initial){
    nyfiken - strövar, men smyger fram mot betet om den kommer nära, kikar, och antingen hugger eller tappar intresset.
    Varje art har dessutom ett temperament: gäddan och laken ligger still och lurar och slår till blixtsnabbt på avstånd,
    abborren är djärv och kommer nära, siken och rödingen är försiktiga och backar gärna, öringen och laxen är snabba och bestämda. */
-const TEMPER={gadda:{amb:1,bold:.8,dash:280,reach:48},glodgadda:{amb:1,bold:.85,dash:290,reach:50},treoga:{bold:.9,dash:180,reach:30},lake:{amb:1,bold:.6,dash:170,reach:32},abborre:{bold:.85,dash:180,reach:30},oring:{bold:.55,dash:250,reach:40},
+const TEMPER={gadda:{amb:1,bold:.8,dash:280,reach:48},glodgadda:{amb:1,bold:.85,dash:290,reach:50},treoga:{bold:.9,dash:180,reach:30},blyhuvud:{bold:.75,dash:140,reach:30},gruval:{bold:.65,dash:230,reach:36},lake:{amb:1,bold:.6,dash:170,reach:32},abborre:{bold:.85,dash:180,reach:30},oring:{bold:.55,dash:250,reach:40},
   regnbage:{bold:.6,dash:220,reach:36},lax:{bold:.5,dash:260,reach:42},kanada:{bold:.5,dash:210,reach:38},roding:{bold:.35,dash:180,reach:30},sik:{bold:.3,dash:150,reach:26},
   harr:{bold:.45,dash:200,reach:30},mort:{bold:.4,dash:140,reach:22},nors:{bold:.35,dash:150,reach:20},bergsimpa:{bold:.5,dash:120,reach:18}};
 const temperOf=f=>TEMPER[f.id]||{bold:.55,dash:190,reach:30};
